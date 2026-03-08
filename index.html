@@ -1,0 +1,1850 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MSC Expert — Formation Conseiller de Voyage</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0a1628;
+    --deep: #0d1f3c;
+    --blue: #1a3a6e;
+    --ocean: #1e5fa8;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --cream: #f5f0e8;
+    --white: #ffffff;
+    --gray: #8a9ab5;
+    --light: #e8eef7;
+    --success: #2a9d6f;
+    --danger: #c94444;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--navy);
+    color: var(--cream);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── LOADER ── */
+  #loader {
+    position: fixed; inset: 0;
+    background: var(--navy);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 20px; z-index: 9999;
+    transition: opacity 0.6s;
+  }
+  #loader .logo { font-family: 'Cormorant Garamond', serif; font-size: 3rem; color: var(--gold); letter-spacing: 0.2em; }
+  #loader .sub { font-size: 0.85rem; color: var(--gray); letter-spacing: 0.3em; text-transform: uppercase; }
+  .loader-bar { width: 200px; height: 2px; background: var(--blue); border-radius: 2px; overflow: hidden; }
+  .loader-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); animation: fill 1.8s ease forwards; }
+  @keyframes fill { from { width: 0; } to { width: 100%; } }
+
+  /* ── WAVES BG ── */
+  .waves-bg {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 300px;
+    opacity: 0.04; pointer-events: none; z-index: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 40px, var(--ocean) 40px, var(--ocean) 41px);
+    animation: wavemove 8s linear infinite;
+  }
+  @keyframes wavemove { from { transform: translateY(0); } to { transform: translateY(-40px); } }
+
+  /* ── NAVIGATION ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(10,22,40,0.96);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(201,168,76,0.2);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 40px; height: 64px;
+  }
+  .nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; color: var(--gold); letter-spacing: 0.15em; }
+  .nav-logo span { color: var(--white); }
+  .nav-progress { display: flex; align-items: center; gap: 12px; font-size: 0.8rem; color: var(--gray); }
+  .progress-bar { width: 120px; height: 4px; background: var(--blue); border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); transition: width 0.5s ease; }
+  .nav-score { font-family: 'Cormorant Garamond', serif; color: var(--gold); font-size: 1.1rem; font-weight: 600; }
+
+  /* ── MAIN LAYOUT ── */
+  .app { display: flex; min-height: 100vh; padding-top: 64px; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 280px; flex-shrink: 0;
+    background: rgba(13,31,60,0.9);
+    border-right: 1px solid rgba(201,168,76,0.12);
+    position: fixed; top: 64px; bottom: 0; left: 0;
+    overflow-y: auto; z-index: 50;
+    transform: translateX(0); transition: transform 0.3s;
+  }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 4px; }
+
+  .sidebar-section { padding: 24px 20px 8px; }
+  .sidebar-section-title {
+    font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.25em;
+    color: var(--gold); font-weight: 600; margin-bottom: 12px;
+  }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 8px; cursor: pointer;
+    transition: all 0.2s; margin-bottom: 2px;
+    font-size: 0.875rem; color: var(--gray);
+    border: 1px solid transparent;
+  }
+  .sidebar-item:hover { background: rgba(30,95,168,0.2); color: var(--cream); }
+  .sidebar-item.active {
+    background: rgba(201,168,76,0.12);
+    color: var(--gold-light);
+    border-color: rgba(201,168,76,0.25);
+  }
+  .sidebar-item.completed { color: var(--success); }
+  .sidebar-item .check { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid currentColor; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.6rem; }
+  .sidebar-item.completed .check { background: var(--success); border-color: var(--success); color: white; }
+
+  /* ── CONTENT ── */
+  .content { margin-left: 280px; flex: 1; padding: 40px 60px; position: relative; z-index: 1; }
+
+  /* ── MODULE ── */
+  .module { display: none; animation: fadeSlide 0.4s ease; }
+  .module.active { display: block; }
+  @keyframes fadeSlide { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+  .module-header { margin-bottom: 40px; }
+  .module-tag { display: inline-block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.25em; color: var(--gold); border: 1px solid rgba(201,168,76,0.4); padding: 4px 12px; border-radius: 20px; margin-bottom: 12px; }
+  .module-title { font-family: 'Cormorant Garamond', serif; font-size: 2.8rem; line-height: 1.15; margin-bottom: 16px; }
+  .module-title span { color: var(--gold); }
+  .module-intro { font-size: 1.05rem; color: var(--gray); line-height: 1.7; max-width: 680px; }
+
+  /* ── CARDS ── */
+  .card-grid { display: grid; gap: 20px; margin: 32px 0; }
+  .card-grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .card-grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .card-grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+  .card {
+    background: rgba(13,31,60,0.7);
+    border: 1px solid rgba(201,168,76,0.15);
+    border-radius: 12px; padding: 24px;
+    transition: all 0.3s; cursor: default;
+  }
+  .card:hover { border-color: rgba(201,168,76,0.4); transform: translateY(-2px); }
+  .card-icon { font-size: 2rem; margin-bottom: 12px; }
+  .card-title { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; color: var(--gold-light); margin-bottom: 8px; }
+  .card-text { font-size: 0.875rem; color: var(--gray); line-height: 1.6; }
+
+  /* ── SHIP CARD ── */
+  .ship-card {
+    background: rgba(13,31,60,0.8);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 14px; overflow: hidden;
+    transition: all 0.3s;
+  }
+  .ship-card:hover { border-color: var(--gold); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+  .ship-card-header {
+    padding: 20px 24px 16px;
+    background: linear-gradient(135deg, rgba(30,95,168,0.3), rgba(10,22,40,0));
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+  }
+  .ship-class { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.2em; color: var(--gold); margin-bottom: 4px; }
+  .ship-name { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--white); }
+  .ship-year { font-size: 0.8rem; color: var(--gray); }
+  .ship-card-body { padding: 20px 24px; }
+  .ship-stat { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.82rem; }
+  .ship-stat:last-child { border-bottom: none; }
+  .ship-stat-label { color: var(--gray); }
+  .ship-stat-value { color: var(--cream); font-weight: 500; }
+  .ship-highlight { margin-top: 14px; padding: 10px 14px; background: rgba(201,168,76,0.08); border-radius: 8px; font-size: 0.8rem; color: var(--gold-light); border-left: 2px solid var(--gold); }
+
+  /* ── AMBIANCES ── */
+  .ambiance-card {
+    border-radius: 12px; padding: 24px; border: 2px solid transparent;
+    transition: all 0.3s; position: relative; overflow: hidden;
+  }
+  .ambiance-bella { background: rgba(20,40,80,0.6); border-color: rgba(100,140,200,0.3); }
+  .ambiance-fantastica { background: rgba(20,60,50,0.6); border-color: rgba(60,160,120,0.3); }
+  .ambiance-aurea { background: rgba(60,40,10,0.6); border-color: rgba(201,168,76,0.4); }
+  .ambiance-yacht { background: rgba(40,20,60,0.6); border-color: rgba(160,80,200,0.4); }
+  .ambiance-name { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; margin-bottom: 6px; }
+  .ambiance-price { font-size: 0.75rem; color: var(--gray); margin-bottom: 16px; letter-spacing: 0.1em; }
+  .ambiance-features { list-style: none; }
+  .ambiance-features li { font-size: 0.83rem; padding: 4px 0; color: var(--cream); }
+  .ambiance-features li::before { content: '→ '; color: var(--gold); }
+  .ambiance-badge {
+    position: absolute; top: 16px; right: 16px;
+    font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em;
+    padding: 4px 10px; border-radius: 20px; font-weight: 600;
+  }
+  .badge-eco { background: rgba(42,157,111,0.2); color: #4dd9a0; border: 1px solid rgba(42,157,111,0.4); }
+  .badge-luxe { background: rgba(160,80,200,0.2); color: #d4a0ff; border: 1px solid rgba(160,80,200,0.4); }
+  .badge-pop { background: rgba(30,95,168,0.3); color: #80b0ff; border: 1px solid rgba(30,95,168,0.5); }
+  .badge-star { background: rgba(201,168,76,0.2); color: var(--gold-light); border: 1px solid rgba(201,168,76,0.4); }
+
+  /* ── SECTION TITLES ── */
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem; color: var(--white);
+    margin: 36px 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(201,168,76,0.2);
+  }
+  .section-title::after { content: ''; display: block; width: 60px; height: 2px; background: var(--gold); margin-top: 8px; }
+
+  /* ── CALLOUT ── */
+  .callout {
+    padding: 20px 24px; border-radius: 10px; margin: 20px 0;
+    border-left: 3px solid var(--gold);
+    background: rgba(201,168,76,0.07);
+    font-size: 0.9rem; line-height: 1.7; color: var(--cream);
+  }
+  .callout.tip { border-color: #2a9d6f; background: rgba(42,157,111,0.07); }
+  .callout.warning { border-color: #c9703c; background: rgba(201,112,60,0.07); }
+  .callout strong { color: var(--gold-light); }
+  .callout.tip strong { color: #4dd9a0; }
+  .callout.warning strong { color: #e8934a; }
+
+  /* ── TABLE ── */
+  .data-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.85rem; }
+  .data-table th { background: rgba(30,95,168,0.3); color: var(--gold-light); padding: 12px 16px; text-align: left; font-weight: 500; letter-spacing: 0.05em; font-size: 0.8rem; text-transform: uppercase; }
+  .data-table td { padding: 11px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--cream); }
+  .data-table tr:hover td { background: rgba(30,95,168,0.1); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .dot-gold { background: var(--gold); }
+  .dot-blue { background: #4aa0e0; }
+  .dot-green { background: #4dd9a0; }
+  .dot-purple { background: #d4a0ff; }
+
+  /* ── QUIZ ── */
+  .quiz-container { max-width: 680px; margin: 0 auto; }
+  .quiz-question {
+    background: rgba(13,31,60,0.8);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 14px; padding: 28px; margin-bottom: 20px;
+  }
+  .quiz-q-text { font-size: 1.05rem; margin-bottom: 20px; line-height: 1.5; }
+  .quiz-q-num { font-size: 0.75rem; color: var(--gold); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 10px; }
+  .quiz-options { display: flex; flex-direction: column; gap: 10px; }
+  .quiz-option {
+    padding: 12px 18px; border-radius: 8px;
+    border: 1.5px solid rgba(255,255,255,0.1);
+    cursor: pointer; transition: all 0.2s;
+    font-size: 0.88rem; color: var(--cream);
+    background: rgba(255,255,255,0.03);
+  }
+  .quiz-option:hover { border-color: var(--ocean); background: rgba(30,95,168,0.15); }
+  .quiz-option.correct { border-color: var(--success); background: rgba(42,157,111,0.15); color: #4dd9a0; }
+  .quiz-option.wrong { border-color: var(--danger); background: rgba(201,68,68,0.1); color: #ff8080; }
+  .quiz-option.disabled { pointer-events: none; opacity: 0.5; }
+  .quiz-feedback { margin-top: 14px; padding: 12px 16px; border-radius: 8px; font-size: 0.85rem; line-height: 1.6; display: none; }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.ok { background: rgba(42,157,111,0.12); color: #4dd9a0; border: 1px solid rgba(42,157,111,0.3); }
+  .quiz-feedback.ko { background: rgba(201,68,68,0.1); color: #ff9090; border: 1px solid rgba(201,68,68,0.3); }
+  .quiz-score-box { text-align: center; padding: 40px; background: rgba(13,31,60,0.8); border: 1px solid rgba(201,168,76,0.3); border-radius: 14px; }
+  .quiz-score-num { font-family: 'Cormorant Garamond', serif; font-size: 5rem; color: var(--gold); }
+  .quiz-score-label { color: var(--gray); font-size: 0.9rem; margin-top: 8px; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 28px; border-radius: 8px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500;
+    border: none; transition: all 0.2s; text-decoration: none;
+  }
+  .btn-gold { background: linear-gradient(135deg, var(--gold), var(--gold-light)); color: var(--navy); }
+  .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(201,168,76,0.3); }
+  .btn-outline { background: transparent; border: 1.5px solid rgba(201,168,76,0.4); color: var(--gold-light); }
+  .btn-outline:hover { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+  .btn-nav { margin-top: 40px; display: flex; gap: 12px; }
+
+  /* ── FIDELITY LEVELS ── */
+  .level-bar { display: flex; gap: 4px; margin: 24px 0; }
+  .level-step {
+    flex: 1; height: 6px; border-radius: 3px;
+    background: var(--blue); transition: background 0.3s;
+  }
+  .level-step.w { background: #a0b0c0; }
+  .level-step.classic { background: #4aa0e0; }
+  .level-step.silver { background: #c0c8d4; }
+  .level-step.gold { background: var(--gold); }
+  .level-step.diamond { background: #a0d0ff; }
+  .level-step.blue { background: linear-gradient(90deg, #4080ff, #00c0ff); }
+
+  .levels-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0; }
+  .level-card {
+    padding: 20px; border-radius: 10px; text-align: center;
+    border: 1.5px solid rgba(255,255,255,0.1); transition: all 0.3s;
+  }
+  .level-card:hover { transform: translateY(-3px); }
+  .level-welcome { border-color: rgba(160,176,192,0.4); background: rgba(160,176,192,0.05); }
+  .level-classic { border-color: rgba(74,160,224,0.4); background: rgba(74,160,224,0.05); }
+  .level-silver { border-color: rgba(192,200,212,0.5); background: rgba(192,200,212,0.05); }
+  .level-gold { border-color: rgba(201,168,76,0.5); background: rgba(201,168,76,0.07); }
+  .level-diamond { border-color: rgba(160,208,255,0.5); background: rgba(160,208,255,0.05); }
+  .level-bluediamond { border-color: rgba(64,128,255,0.5); background: rgba(64,128,255,0.07); background-image: linear-gradient(135deg, rgba(64,128,255,0.05), rgba(0,192,255,0.05)); }
+  .level-icon { font-size: 2rem; margin-bottom: 8px; }
+  .level-name { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; margin-bottom: 6px; }
+  .level-pts { font-size: 0.75rem; color: var(--gray); }
+
+  /* ── TIMELINE ── */
+  .timeline { position: relative; padding-left: 32px; }
+  .timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 1px; background: rgba(201,168,76,0.2); }
+  .timeline-item { position: relative; margin-bottom: 28px; }
+  .timeline-dot { position: absolute; left: -26px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--gold); border: 2px solid var(--navy); }
+  .timeline-year { font-size: 0.75rem; color: var(--gold); letter-spacing: 0.15em; margin-bottom: 4px; }
+  .timeline-text { font-size: 0.875rem; color: var(--cream); line-height: 1.6; }
+
+  /* ── DESTINATION MAP ── */
+  .dest-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 24px 0; }
+  .dest-card {
+    padding: 20px; border-radius: 10px;
+    background: rgba(13,31,60,0.6); border: 1px solid rgba(255,255,255,0.07);
+    transition: all 0.3s;
+  }
+  .dest-card:hover { border-color: rgba(201,168,76,0.3); background: rgba(13,31,60,0.9); }
+  .dest-flag { font-size: 1.5rem; margin-bottom: 8px; }
+  .dest-name { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; color: var(--gold-light); margin-bottom: 6px; }
+  .dest-ports { font-size: 0.78rem; color: var(--gray); line-height: 1.6; }
+  .dest-season { display: inline-block; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; padding: 2px 8px; border-radius: 10px; background: rgba(30,95,168,0.25); color: #80b0ff; margin-top: 8px; border: 1px solid rgba(30,95,168,0.4); }
+
+  /* ── HOMEPAGE ── */
+  .home-hero { text-align: center; padding: 60px 40px 40px; }
+  .home-hero .big-title { font-family: 'Cormorant Garamond', serif; font-size: 4rem; line-height: 1.1; margin-bottom: 20px; }
+  .home-hero .big-title span { color: var(--gold); }
+  .home-hero p { font-size: 1.1rem; color: var(--gray); max-width: 560px; margin: 0 auto 32px; line-height: 1.7; }
+  .home-modules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 48px; }
+  .home-mod {
+    padding: 28px; border-radius: 14px; cursor: pointer;
+    background: rgba(13,31,60,0.7); border: 1px solid rgba(201,168,76,0.15);
+    transition: all 0.3s; text-align: left;
+  }
+  .home-mod:hover { border-color: var(--gold); transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,0.3); }
+  .home-mod-num { font-family: 'Cormorant Garamond', serif; font-size: 3rem; color: rgba(201,168,76,0.2); line-height: 1; margin-bottom: 12px; }
+  .home-mod-title { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; color: var(--white); margin-bottom: 8px; }
+  .home-mod-text { font-size: 0.8rem; color: var(--gray); line-height: 1.6; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1024px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .content { margin-left: 0; padding: 32px 24px; }
+    .card-grid-3, .card-grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .home-modules { grid-template-columns: repeat(2, 1fr); }
+    .levels-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 640px) {
+    .card-grid-2, .card-grid-3, .card-grid-4 { grid-template-columns: 1fr; }
+    .home-modules { grid-template-columns: 1fr; }
+    .levels-grid { grid-template-columns: 1fr; }
+    .dest-grid { grid-template-columns: 1fr; }
+    .module-title { font-size: 2rem; }
+  }
+
+  /* Mobile toggle */
+  .sidebar-toggle {
+    display: none; position: fixed; bottom: 24px; right: 24px; z-index: 200;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--gold); color: var(--navy); font-size: 1.3rem;
+    border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(201,168,76,0.4);
+  }
+  @media (max-width: 1024px) { .sidebar-toggle { display: flex; align-items: center; justify-content: center; } }
+
+  .gnl-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.7rem; padding: 3px 10px; border-radius: 12px; background: rgba(42,157,111,0.15); color: #4dd9a0; border: 1px solid rgba(42,157,111,0.3); margin-left: 8px; }
+
+  .highlight-box {
+    background: linear-gradient(135deg, rgba(201,168,76,0.08), rgba(30,95,168,0.08));
+    border: 1px solid rgba(201,168,76,0.25); border-radius: 12px;
+    padding: 24px 28px; margin: 24px 0;
+  }
+  .highlight-box .hb-title { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; color: var(--gold-light); margin-bottom: 12px; }
+
+  .tag { display: inline-block; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; margin: 2px; }
+  .tag-blue { background: rgba(30,95,168,0.25); color: #80b0ff; border: 1px solid rgba(30,95,168,0.4); }
+  .tag-gold { background: rgba(201,168,76,0.15); color: var(--gold-light); border: 1px solid rgba(201,168,76,0.3); }
+  .tag-green { background: rgba(42,157,111,0.15); color: #4dd9a0; border: 1px solid rgba(42,157,111,0.3); }
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="logo">MSC</div>
+  <div class="sub">Formation Conseiller Expert</div>
+  <div class="loader-bar"><div class="loader-fill"></div></div>
+</div>
+
+<div class="waves-bg"></div>
+
+<nav>
+  <div class="nav-logo">MSC <span>Expert</span></div>
+  <div class="nav-progress">
+    <span id="progress-text">0 / 7 modules</span>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+  <div class="nav-score">🏆 <span id="total-score">0</span> pts</div>
+</nav>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Modules</div>
+      <div class="sidebar-item active" onclick="showModule('home', this)" data-module="home">
+        <div class="check">🏠</div> Accueil
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Fondamentaux</div>
+      <div class="sidebar-item" onclick="showModule('histoire', this)" data-module="histoire">
+        <div class="check"></div> 1. Histoire & ADN
+      </div>
+      <div class="sidebar-item" onclick="showModule('flotte', this)" data-module="flotte">
+        <div class="check"></div> 2. La Flotte complète
+      </div>
+      <div class="sidebar-item" onclick="showModule('cabines', this)" data-module="cabines">
+        <div class="check"></div> 3. Cabines & Ambiances
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Services & Vente</div>
+      <div class="sidebar-item" onclick="showModule('services', this)" data-module="services">
+        <div class="check"></div> 4. Services à bord
+      </div>
+      <div class="sidebar-item" onclick="showModule('destinations', this)" data-module="destinations">
+        <div class="check"></div> 5. Destinations
+      </div>
+      <div class="sidebar-item" onclick="showModule('fidelite', this)" data-module="fidelite">
+        <div class="check"></div> 6. MSC Voyagers Club
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Expertise avancée</div>
+      <div class="sidebar-item" onclick="showModule('excursions', this)" data-module="excursions">
+        <div class="check"></div> 7. Excursions MSC
+      </div>
+      <div class="sidebar-item" onclick="showModule('securite', this)" data-module="securite">
+        <div class="check"></div> 8. Sécurité à bord
+      </div>
+      <div class="sidebar-item" onclick="showModule('devenir', this)" data-module="devenir">
+        <div class="check"></div> 9. Devenir Agent Croisière
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Certification</div>
+      <div class="sidebar-item" onclick="showModule('quiz', this)" data-module="quiz">
+        <div class="check">★</div> Quiz Final
+      </div>
+    </div>
+  </aside>
+
+  <main class="content">
+
+    <!-- HOME -->
+    <div class="module active" id="mod-home">
+      <div class="home-hero">
+        <div class="module-tag">Formation Professionnelle</div>
+        <div class="big-title">Devenez Expert<br><span>MSC Croisières</span></div>
+        <p>Maîtrisez la flotte, les services, les destinations et le programme fidélité. Conseillez vos clients avec confiance et précision.</p>
+        <button class="btn btn-gold" onclick="showModule('histoire', document.querySelector('[data-module=histoire]'))">Commencer la formation →</button>
+      </div>
+      <div class="home-modules">
+        <div class="home-mod" onclick="showModule('histoire', document.querySelector('[data-module=histoire]'))">
+          <div class="home-mod-num">01</div>
+          <div class="home-mod-title">Histoire & ADN</div>
+          <div class="home-mod-text">Fondation, valeurs, positionnement marché et chiffres clés de MSC</div>
+        </div>
+        <div class="home-mod" onclick="showModule('flotte', document.querySelector('[data-module=flotte]'))">
+          <div class="home-mod-num">02</div>
+          <div class="home-mod-title">La Flotte</div>
+          <div class="home-mod-text">23 navires, 6 classes — maîtrisez chaque paquebot et ses spécificités</div>
+        </div>
+        <div class="home-mod" onclick="showModule('cabines', document.querySelector('[data-module=cabines]'))">
+          <div class="home-mod-num">03</div>
+          <div class="home-mod-title">Cabines & Ambiances</div>
+          <div class="home-mod-text">Bella, Fantastica, Aurea, Yacht Club — conseiller le bon choix</div>
+        </div>
+        <div class="home-mod" onclick="showModule('services', document.querySelector('[data-module=services]'))">
+          <div class="home-mod-num">04</div>
+          <div class="home-mod-title">Services à bord</div>
+          <div class="home-mod-text">Restauration, spa, forfaits boissons, internet, divertissements</div>
+        </div>
+        <div class="home-mod" onclick="showModule('destinations', document.querySelector('[data-module=destinations]'))">
+          <div class="home-mod-num">05</div>
+          <div class="home-mod-title">Destinations</div>
+          <div class="home-mod-text">Méditerranée, Caraïbes, Nord, Amérique du Sud, Ocean Cay…</div>
+        </div>
+        <div class="home-mod" onclick="showModule('fidelite', document.querySelector('[data-module=fidelite]'))">
+          <div class="home-mod-num">06</div>
+          <div class="home-mod-title">MSC Voyagers Club</div>
+          <div class="home-mod-text">6 niveaux, accumulation de points, avantages — outil de fidélisation</div>
+        </div>
+        <div class="home-mod" onclick="showModule('excursions', document.querySelector('[data-module=excursions]'))">
+          <div class="home-mod-num">07</div>
+          <div class="home-mod-title">Excursions MSC</div>
+          <div class="home-mod-text">Catégories, forfaits Explorer, PROTECTOURS, conseils de réservation et vente</div>
+        </div>
+        <div class="home-mod" onclick="showModule('securite', document.querySelector('[data-module=securite]'))">
+          <div class="home-mod-num">08</div>
+          <div class="home-mod-title">Sécurité à bord</div>
+          <div class="home-mod-text">Exercice de sauvetage, équipements, règles à connaître — rassurer vos clients</div>
+        </div>
+        <div class="home-mod" onclick="showModule('devenir', document.querySelector('[data-module=devenir]'))">
+          <div class="home-mod-num">09</div>
+          <div class="home-mod-title">Devenir Agent Croisière</div>
+          <div class="home-mod-text">Statuts, CLIA, Atout France, réseaux mandataires, revenus — votre feuille de route</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODULE 1: HISTOIRE -->
+    <div class="module" id="mod-histoire">
+      <div class="module-header">
+        <div class="module-tag">Module 1</div>
+        <h1 class="module-title">Histoire & <span>ADN de MSC</span></h1>
+        <p class="module-intro">Comprendre l'histoire de MSC Croisières vous permettra de raconter une véritable histoire à vos clients et de positionner la compagnie face à ses concurrents.</p>
+      </div>
+
+      <div class="section-title">Les origines</div>
+      <div class="card-grid card-grid-2">
+        <div class="card">
+          <div class="card-icon">🚢</div>
+          <div class="card-title">Fondation</div>
+          <div class="card-text">MSC est fondée en <strong>1970</strong> à Naples par <strong>Gianluigi Aponte</strong>, un marin napolitain, avec un seul cargo : le Patricia. L'entreprise démarre dans le fret maritime, devenant le 2ème armateur mondial de conteneurs.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">⚓</div>
+          <div class="card-title">Transition croisières</div>
+          <div class="card-text">En <strong>1987</strong>, MSC se lance dans les croisières en rachetant la Starlauro Cruises. L'ADN maritime familial devient la force motrice : authenticité italienne, service chaleureux et ambition d'expansion.</div>
+        </div>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-year">1970</div>
+          <div class="timeline-text">Fondation de MSC par Gianluigi Aponte avec le cargo « Patricia »</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-year">1987</div>
+          <div class="timeline-text">Lancement de la division croisières. Rachat de Starlauro Cruises.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-year">2000-2006</div>
+          <div class="timeline-text">Construction des 4 navires de la Classe Lirica aux Chantiers de l'Atlantique (Saint-Nazaire)</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-year">2008</div>
+          <div class="timeline-text">Lancement de la Classe Fantasia — MSC devient n°3 mondial de la croisière</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-year">2017-2019</div>
+          <div class="timeline-text">Classes Meraviglia et Seaside — expansion massive, innovation technologique</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-year">2022</div>
+          <div class="timeline-text">MSC World Europa — 1er navire GNL, révolution environnementale</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-year">2025</div>
+          <div class="timeline-text">23 navires en flotte, MSC World America lancé, classement parmi les 3 premiers mondiaux</div>
+        </div>
+      </div>
+
+      <div class="section-title">Chiffres clés</div>
+      <div class="card-grid card-grid-4">
+        <div class="card" style="text-align:center">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:3rem;color:var(--gold)">23</div>
+          <div class="card-text">navires en 2025</div>
+        </div>
+        <div class="card" style="text-align:center">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:3rem;color:var(--gold)">#2</div>
+          <div class="card-text">armateur mondial conteneurs</div>
+        </div>
+        <div class="card" style="text-align:center">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:3rem;color:var(--gold)">-33%</div>
+          <div class="card-text">émissions CO₂ depuis 2008</div>
+        </div>
+        <div class="card" style="text-align:center">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:3rem;color:var(--gold)">6</div>
+          <div class="card-text">classes de navires</div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>💡 Argument de vente clé :</strong> MSC est l'unique grande compagnie de croisière restée <strong>propriété familiale</strong> (famille Aponte). Cela se traduit par une vision long terme, une culture du service authentique, et des investissements massifs dans la modernisation de la flotte sans pression des actionnaires.
+      </div>
+
+      <div class="section-title">Positionnement & concurrents</div>
+      <table class="data-table">
+        <thead><tr><th>Compagnie</th><th>Positionnement</th><th>Flotte</th><th>Public cible</th></tr></thead>
+        <tbody>
+          <tr><td><span class="dot dot-gold"></span>MSC Croisières</td><td>Premium accessible, européen</td><td>23 navires</td><td>Familles, couples, seniors</td></tr>
+          <tr><td><span class="dot dot-blue"></span>Royal Caribbean</td><td>Premium américain, attractions</td><td>~65 navires</td><td>Familles américaines</td></tr>
+          <tr><td><span class="dot dot-green"></span>Costa Croisières</td><td>Italien accessible, festif</td><td>~12 navires</td><td>Marché européen budget</td></tr>
+          <tr><td><span class="dot dot-purple"></span>Norwegian Cruise</td><td>Freestyle, américain</td><td>~20 navires</td><td>Adultes, liberté</td></tr>
+        </tbody>
+      </table>
+
+      <div class="btn-nav">
+        <button class="btn btn-gold" onclick="completeAndNext('histoire', 'flotte')">Module suivant →</button>
+      </div>
+    </div>
+
+    <!-- MODULE 2: FLOTTE -->
+    <div class="module" id="mod-flotte">
+      <div class="module-header">
+        <div class="module-tag">Module 2</div>
+        <h1 class="module-title">La Flotte <span>MSC</span></h1>
+        <p class="module-intro">23 navires répartis en 6 classes distinctes. Chaque classe a sa personnalité, ses forces et son public. Savoir orienter un client vers le bon navire est essentiel.</p>
+      </div>
+
+      <div class="callout tip">
+        <strong>Astuce conseiller :</strong> Mémorisez les 6 classes dans l'ordre chronologique : Lirica → Musica → Fantasia → Meraviglia → Seaside → World. Chaque classe représente une génération de navires plus grands et plus modernes.
+      </div>
+
+      <!-- CLASSE LIRICA -->
+      <div class="section-title">Classe Lirica — La tradition</div>
+      <div class="card-grid card-grid-2">
+        <div class="ship-card">
+          <div class="ship-card-header">
+            <div class="ship-class">Classe Lirica</div>
+            <div class="ship-name">MSC Armonia</div>
+            <div class="ship-year">En service depuis 2000 · Rénové</div>
+          </div>
+          <div class="ship-card-body">
+            <div class="ship-stat"><span class="ship-stat-label">Longueur</span><span class="ship-stat-value">251 m</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Capacité</span><span class="ship-stat-value">~1 900 passagers</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Ponts passagers</span><span class="ship-stat-value">13</span></div>
+            <div class="ship-highlight">Atmosphère intimiste, escales en ports exclusifs, parfait pour un 1er voyage</div>
+          </div>
+        </div>
+        <div class="ship-card">
+          <div class="ship-card-header">
+            <div class="ship-class">Classe Lirica</div>
+            <div class="ship-name">MSC Lirica / Sinfonia / Opera</div>
+            <div class="ship-year">2003–2004 · Rénovés</div>
+          </div>
+          <div class="ship-card-body">
+            <div class="ship-stat"><span class="ship-stat-label">Longueur</span><span class="ship-stat-value">274 m</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Capacité</span><span class="ship-stat-value">~2 000 passagers</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Points forts</span><span class="ship-stat-value">Ports intimistes</span></div>
+            <div class="ship-highlight">Idéaux pour la Méditerranée classique et les croisières Grand Voyage</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLASSE MUSICA -->
+      <div class="section-title">Classe Musica — La modernité</div>
+      <div class="card-grid card-grid-2">
+        <div class="ship-card">
+          <div class="ship-card-header">
+            <div class="ship-class">Classe Musica</div>
+            <div class="ship-name">MSC Musica / Orchestra</div>
+            <div class="ship-year">2006–2007</div>
+          </div>
+          <div class="ship-card-body">
+            <div class="ship-stat"><span class="ship-stat-label">Longueur</span><span class="ship-stat-value">293 m</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Capacité</span><span class="ship-stat-value">~2 550 passagers</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Restaurants</span><span class="ship-stat-value">4 restaurants + buffet</span></div>
+            <div class="ship-highlight">Première montée en gamme — art contemporain à bord, MSC Yacht Club</div>
+          </div>
+        </div>
+        <div class="ship-card">
+          <div class="ship-card-header">
+            <div class="ship-class">Classe Musica</div>
+            <div class="ship-name">MSC Magnifica / Poesia</div>
+            <div class="ship-year">2008–2010</div>
+          </div>
+          <div class="ship-card-body">
+            <div class="ship-stat"><span class="ship-stat-label">Longueur</span><span class="ship-stat-value">293 m</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Capacité</span><span class="ship-stat-value">~2 550 passagers</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Spa primé</span><span class="ship-stat-value">MSC Aurea Spa</span></div>
+            <div class="ship-highlight">5 restaurants gastronomiques, 12 bars — excellence culinaire MSC</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLASSE FANTASIA -->
+      <div class="section-title">Classe Fantasia — Le prestige</div>
+      <div class="card-grid card-grid-2">
+        <div class="ship-card">
+          <div class="ship-card-header">
+            <div class="ship-class">Classe Fantasia</div>
+            <div class="ship-name">MSC Fantasia / Splendida</div>
+            <div class="ship-year">2008–2009</div>
+          </div>
+          <div class="ship-card-body">
+            <div class="ship-stat"><span class="ship-stat-label">Longueur</span><span class="ship-stat-value">333 m</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Capacité</span><span class="ship-stat-value">~4 500 passagers</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Ponts</span><span class="ship-stat-value">18 ponts</span></div>
+            <div class="ship-highlight">Naissance du concept Yacht Club — « navire dans le navire »</div>
+          </div>
+        </div>
+        <div class="ship-card">
+          <div class="ship-card-header">
+            <div class="ship-class">Classe Fantasia</div>
+            <div class="ship-name">MSC Divina / Preziosa</div>
+            <div class="ship-year">2012–2013</div>
+          </div>
+          <div class="ship-card-body">
+            <div class="ship-stat"><span class="ship-stat-label">Longueur</span><span class="ship-stat-value">333 m</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Capacité</span><span class="ship-stat-value">~4 345 passagers</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Marraine</span><span class="ship-stat-value">Sophia Loren (Divina)</span></div>
+            <div class="ship-highlight">MSC Divina : l'un des navires les plus aimés de la flotte, élégance italienne</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLASSE MERAVIGLIA -->
+      <div class="section-title">Classe Meraviglia — L'innovation</div>
+      <div class="card-grid card-grid-3">
+        <div class="ship-card">
+          <div class="ship-card-header">
+            <div class="ship-class">Classe Meraviglia</div>
+            <div class="ship-name">MSC Meraviglia</div>
+            <div class="ship-year">2017</div>
+          </div>
+          <div class="ship-card-body">
+            <div class="ship-stat"><span class="ship-stat-label">Longueur</span><span class="ship-stat-value">315 m</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Capacité</span><span class="ship-stat-value">5 700 passagers</span></div>
+            <div class="ship-highlight">🌌 Promenade intérieure avec ciel LED de 93 m — technologie immersive unique</div>
+          </div>
+        </div>
+        <div class="ship-card">
+          <div class="ship-card-header">
+            <div class="ship-class">Classe Meraviglia Plus</div>
+            <div class="ship-name">MSC Bellissima</div>
+            <div class="ship-year">2019</div>
+          </div>
+          <div class="ship-card-body">
+            <div class="ship-stat"><span class="ship-stat-label">Longueur</span><span class="ship-stat-value">315 m</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">IA à bord</span><span class="ship-stat-value">Zoe — assistant vocal</span></div>
+            <div class="ship-highlight">1er assistant IA sur un navire de croisière — Zoe parle 7 langues</div>
+          </div>
+        </div>
+        <div class="ship-card">
+          <div class="ship-card-header">
+            <div class="ship-class">Classe Meraviglia Plus</div>
+            <div class="ship-name">MSC Grandiosa / Virtuosa</div>
+            <div class="ship-year">2019–2021</div>
+          </div>
+          <div class="ship-card-body">
+            <div class="ship-stat"><span class="ship-stat-label">Capacité</span><span class="ship-stat-value">~6 300 passagers</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Partenariat</span><span class="ship-stat-value">Cirque du Soleil at Sea</span></div>
+            <div class="ship-highlight">Spectacles du Cirque du Soleil exclusifs à bord</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLASSE SEASIDE -->
+      <div class="section-title">Classe Seaside — L'extérieur</div>
+      <div class="card-grid card-grid-2">
+        <div class="ship-card">
+          <div class="ship-card-header">
+            <div class="ship-class">Classe Seaside</div>
+            <div class="ship-name">MSC Seaside / Seaview</div>
+            <div class="ship-year">2017–2018</div>
+          </div>
+          <div class="ship-card-body">
+            <div class="ship-stat"><span class="ship-stat-label">Longueur</span><span class="ship-stat-value">323 m</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Capacité</span><span class="ship-stat-value">~4 140 passagers</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Promenade</span><span class="ship-stat-value">90 m en bord de mer</span></div>
+            <div class="ship-highlight">Conçus pour les Caraïbes : max de surface extérieure, parc aquatique XXL</div>
+          </div>
+        </div>
+        <div class="ship-card">
+          <div class="ship-card-header">
+            <div class="ship-class">Seaside Evo</div>
+            <div class="ship-name">MSC Seashore / Seascape</div>
+            <div class="ship-year">2021–2022</div>
+          </div>
+          <div class="ship-card-body">
+            <div class="ship-stat"><span class="ship-stat-label">Longueur</span><span class="ship-stat-value">339 m</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Capacité</span><span class="ship-stat-value">~5 600 passagers</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Toboggan</span><span class="ship-stat-value">Venom Drop — 11 ponts</span></div>
+            <div class="ship-highlight">MSC Seashore : l'un des plus grands navires de la flotte. Parc aquatique record</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLASSE WORLD -->
+      <div class="section-title">Classe World — Le futur <span class="gnl-badge">🌿 GNL</span></div>
+      <div class="card-grid card-grid-3">
+        <div class="ship-card">
+          <div class="ship-card-header" style="background:linear-gradient(135deg,rgba(42,157,111,0.2),rgba(10,22,40,0))">
+            <div class="ship-class">Classe World</div>
+            <div class="ship-name">MSC World Europa</div>
+            <div class="ship-year">2022 · 1er navire GNL MSC</div>
+          </div>
+          <div class="ship-card-body">
+            <div class="ship-stat"><span class="ship-stat-label">Longueur</span><span class="ship-stat-value">335 m</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Capacité</span><span class="ship-stat-value">>6 700 passagers</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Propulsion</span><span class="ship-stat-value">GNL (Gaz Naturel Liquéfié)</span></div>
+            <div class="ship-highlight">🌿 Design futuriste, premier voyage au Qatar, technologie Aqua By MSC (eau purifiée à bord)</div>
+          </div>
+        </div>
+        <div class="ship-card">
+          <div class="ship-card-header" style="background:linear-gradient(135deg,rgba(42,157,111,0.2),rgba(10,22,40,0))">
+            <div class="ship-class">Classe Meraviglia</div>
+            <div class="ship-name">MSC Euribia</div>
+            <div class="ship-year">2023 · GNL</div>
+          </div>
+          <div class="ship-card-body">
+            <div class="ship-stat"><span class="ship-stat-label">Capacité</span><span class="ship-stat-value">6 700 passagers</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Cabines</span><span class="ship-stat-value">2 400 cabines/suites</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Coque</span><span class="ship-stat-value">Fresque écologique</span></div>
+            <div class="ship-highlight">Fresque sur la coque symbolisant l'engagement MSC pour les océans</div>
+          </div>
+        </div>
+        <div class="ship-card">
+          <div class="ship-card-header" style="background:linear-gradient(135deg,rgba(42,157,111,0.2),rgba(10,22,40,0))">
+            <div class="ship-class">Classe World</div>
+            <div class="ship-name">MSC World America</div>
+            <div class="ship-year">Avril 2025 · GNL</div>
+          </div>
+          <div class="ship-card-body">
+            <div class="ship-stat"><span class="ship-stat-label">Port de base</span><span class="ship-stat-value">Miami</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Propulsion</span><span class="ship-stat-value">GNL</span></div>
+            <div class="ship-stat"><span class="ship-stat-label">Destination</span><span class="ship-stat-value">Caraïbes</span></div>
+            <div class="ship-highlight">🆕 Dernière livraison 2025 — sister-ship du World Europa pour les Caraïbes</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout warning">
+        <strong>⚡ À venir :</strong> MSC World Asia (2026), MSC World Atlantic (2027), MSC World Pacific (2028), MSC World Atlantic II (2029) — 4 navires GNL commandés au chantier Meyer Werft en Allemagne.
+      </div>
+
+      <div class="btn-nav">
+        <button class="btn btn-outline" onclick="showModule('histoire', document.querySelector('[data-module=histoire]'))">← Précédent</button>
+        <button class="btn btn-gold" onclick="completeAndNext('flotte', 'cabines')">Module suivant →</button>
+      </div>
+    </div>
+
+    <!-- MODULE 3: CABINES & AMBIANCES -->
+    <div class="module" id="mod-cabines">
+      <div class="module-header">
+        <div class="module-tag">Module 3</div>
+        <h1 class="module-title">Cabines & <span>Ambiances</span></h1>
+        <p class="module-intro">MSC propose 4 niveaux d'expérience ("ambiances") qui déterminent les services inclus, les points de fidélité gagnés et le prix. C'est la clé pour orienter chaque type de client.</p>
+      </div>
+
+      <div class="section-title">Les 4 Ambiances MSC</div>
+      <div class="card-grid card-grid-2">
+        <div class="ambiance-card ambiance-bella">
+          <div class="ambiance-badge badge-pop">Budget friendly</div>
+          <div class="ambiance-name">🔵 Bella</div>
+          <div class="ambiance-price">ENTRÉE DE GAMME · LE MOINS CHER</div>
+          <ul class="ambiance-features">
+            <li>Cabine intérieure, extérieure ou balcon</li>
+            <li>Restaurant principal inclus</li>
+            <li>Buffet inclus</li>
+            <li>Spectacles inclus</li>
+            <li>Heure de dîner fixe</li>
+            <li>Moins de points fidélité</li>
+          </ul>
+        </div>
+        <div class="ambiance-card ambiance-fantastica">
+          <div class="ambiance-badge badge-star">Best seller</div>
+          <div class="ambiance-name">🟢 Fantastica</div>
+          <div class="ambiance-price">RAPPORT QUALITÉ-PRIX · LE PLUS VENDU</div>
+          <ul class="ambiance-features">
+            <li>Tout ce qu'inclut Bella +</li>
+            <li>Flexibilité horaire dîner</li>
+            <li>Changement de cabine possible</li>
+            <li>Crédit à bord selon promotion</li>
+            <li>Plus de points fidélité</li>
+            <li>Modification gratuite jusqu'à 3 mois avant départ</li>
+          </ul>
+        </div>
+        <div class="ambiance-card ambiance-aurea">
+          <div class="ambiance-badge badge-eco">Premium</div>
+          <div class="ambiance-name">🟡 Aurea</div>
+          <div class="ambiance-price">CABINES BALCON PREMIUM · SPA INCLUS</div>
+          <ul class="ambiance-features">
+            <li>Tout Fantastica +</li>
+            <li>Cabine balcon ou suite uniquement</li>
+            <li>Accès prioritaire au MSC Aurea Spa (1h thermal)</li>
+            <li>Massage inclus</li>
+            <li>Priorité à bord et à l'embarquement</li>
+            <li>Encore plus de points fidélité</li>
+          </ul>
+        </div>
+        <div class="ambiance-card ambiance-yacht">
+          <div class="ambiance-badge badge-luxe">Luxe exclusif</div>
+          <div class="ambiance-name">⭐ MSC Yacht Club</div>
+          <div class="ambiance-price">NAVIRE DANS LE NAVIRE · TOUT COMPRIS</div>
+          <ul class="ambiance-features">
+            <li>Suite exclusive (ponts supérieurs)</li>
+            <li>Majordome 24h/24 & conciergerie dédiée</li>
+            <li>Restaurant gastronomique privé (horaires libres)</li>
+            <li>Top Sail Lounge panoramique exclusif</li>
+            <li>Forfait boissons Premium Extra inclus</li>
+            <li>Wi-Fi illimité 2 appareils inclus</li>
+            <li>Spa thermal illimité inclus</li>
+            <li>Embarquement VIP prioritaire</li>
+            <li>Excursions sur mesure disponibles</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>💡 Argument Yacht Club :</strong> À bord de Ocean Cay MSC Marine Reserve, les clients Yacht Club ont accès à l'Ocean House Beach (plage privée avec cabanas), l'Ocean House Restaurant gastronomique et bar exclusif. Une expérience totalement distincte de l'île.
+      </div>
+
+      <div class="section-title">Types de cabines</div>
+      <table class="data-table">
+        <thead><tr><th>Type</th><th>Surface approx.</th><th>Capacité</th><th>Ambiances dispo</th></tr></thead>
+        <tbody>
+          <tr><td>Cabine intérieure</td><td>12–28 m²</td><td>2–4 pers.</td><td>Bella, Fantastica</td></tr>
+          <tr><td>Cabine extérieure</td><td>15–25 m²</td><td>2–4 pers.</td><td>Bella, Fantastica</td></tr>
+          <tr><td>Cabine avec balcon</td><td>15–26 m² + balcon</td><td>2–4 pers.</td><td>Bella, Fantastica, Aurea</td></tr>
+          <tr><td>Suite</td><td>28–50 m² + balcon</td><td>2–4 pers.</td><td>Fantastica, Aurea, Yacht Club</td></tr>
+          <tr><td>Suite Grand Luxe (YC)</td><td>40–100 m²</td><td>2–6 pers.</td><td>MSC Yacht Club exclusif</td></tr>
+        </tbody>
+      </table>
+
+      <div class="highlight-box">
+        <div class="hb-title">🎯 Règle d'or conseiller</div>
+        <p style="font-size:0.9rem;line-height:1.7;color:var(--cream)">
+          Les forfaits boissons <strong>doivent être achetés pour tous les occupants</strong> d'une même cabine (ou pour toutes les personnes qui dînent à la même table). Informez systématiquement vos clients de cette règle pour éviter les mauvaises surprises. Le forfait <strong>Premium Extra</strong> est inclus dans le Yacht Club — c'est un argument de valeur à valoriser.
+        </p>
+      </div>
+
+      <div class="btn-nav">
+        <button class="btn btn-outline" onclick="showModule('flotte', document.querySelector('[data-module=flotte]'))">← Précédent</button>
+        <button class="btn btn-gold" onclick="completeAndNext('cabines', 'services')">Module suivant →</button>
+      </div>
+    </div>
+
+    <!-- MODULE 4: SERVICES -->
+    <div class="module" id="mod-services">
+      <div class="module-header">
+        <div class="module-tag">Module 4</div>
+        <h1 class="module-title">Services <span>à bord</span></h1>
+        <p class="module-intro">MSC a une politique de prix de base compétitifs, complétés par des services à la carte. Connaître ces services vous permet de maximiser la valeur pour le client et votre commission.</p>
+      </div>
+
+      <div class="section-title">Restauration</div>
+      <div class="card-grid card-grid-3">
+        <div class="card">
+          <div class="card-icon">🍽️</div>
+          <div class="card-title">Restaurant principal</div>
+          <div class="card-text">Inclus dans toutes les ambiances. Service à table, menu gastronomique italien. 2 services selon ambiance choisie.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🍕</div>
+          <div class="card-title">Buffet Marketplace</div>
+          <div class="card-text">Inclus. Cuisine internationale 20h/24. Large choix, cuisines thématiques, pizzeria intégrée.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">⭐</div>
+          <div class="card-title">Restaurants de spécialités</div>
+          <div class="card-text">En supplément. Teppanyaki, steakhouse, fruits de mer, cuisine française. Jean-Philippe Maury, Venchi 1878 (chocolat).</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🏆</div>
+          <div class="card-title">Restaurant Yacht Club</div>
+          <div class="card-text">Exclusif YC. Gastronomique, horaires libres, service blanc, chef dédié. Inclus dans la formule.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">☕</div>
+          <div class="card-title">Cafés & Bars</div>
+          <div class="card-text">Bars thématiques (champagne, sports, casino). Café LaMusa. Bar à cocktails signature selon le navire.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🍰</div>
+          <div class="card-title">Pâtisseries & Room Service</div>
+          <div class="card-text">Room service 24h/24 (supplément ou inclus selon formule). Pâtisseries en libre accès. Pizza à emporter.</div>
+        </div>
+      </div>
+
+      <div class="section-title">Forfaits boissons</div>
+      <div class="callout warning">
+        <strong>⚠️ Règle importante :</strong> Les forfaits boissons doivent être achetés pour tous les occupants d'une même cabine. Maximum <strong>15 boissons alcoolisées/jour</strong> par personne. Non applicables dans les restaurants de spécialités (sauf Premium Extra).
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Forfait</th><th>Ce qui est inclus</th><th>Valable où</th><th>Note</th></tr></thead>
+        <tbody>
+          <tr><td><span class="dot dot-blue"></span><strong>Easy</strong></td><td>Boissons soft, alcools courants, bière, vin maison</td><td>Bars, buffet, resto principal</td><td>Non valable Caraïbes/Amér. Nord</td></tr>
+          <tr><td><span class="dot dot-gold"></span><strong>Premium Extra</strong></td><td>Alcools premium, champagne, cocktails, whisky, café</td><td>Bars, buffet, restos inclus, îles privées</td><td>Inclus Yacht Club · Réduction 25% sur bouteilles</td></tr>
+          <tr><td><span class="dot dot-green"></span><strong>Sans Alcool</strong></td><td>Toutes boissons sans alcool, jus, sodas, cafés</td><td>Partout (sauf restos spécialités)</td><td>Recommandé pour conducteurs, femmes enceintes</td></tr>
+          <tr><td><span class="dot dot-purple"></span><strong>Mineurs (3-11 ans)</strong></td><td>Soft drinks, jus, milk-shakes</td><td>Bars, buffet, resto principal, îles privées</td><td>Obligatoire si adultes ont un forfait</td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-title">Bien-être & Spa</div>
+      <div class="card-grid card-grid-2">
+        <div class="card">
+          <div class="card-icon">🧖</div>
+          <div class="card-title">MSC Aurea Spa</div>
+          <div class="card-text">Jusqu'à 10 000 pieds carrés selon le navire. Suite thermale (hammam, sauna, douches sensorielles, bassin hydro). Massages, soins du visage, enveloppements. Salon de coiffure Jean-Louis David à bord. Inclus partiellement avec Aurea, illimité avec Yacht Club.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">💪</div>
+          <div class="card-title">Sport & Fitness</div>
+          <div class="card-text">Salle de fitness dernier cri incluse. Cours de yoga, Pilates, Zumba, spinning (supplément). Simulateur de golf, courts de squash, mini-golf sur certains navires. Simulateur F1 sur certains navires (réduction 50% niveau Gold Voyagers Club).</div>
+        </div>
+      </div>
+
+      <div class="section-title">Divertissements</div>
+      <div class="card-grid card-grid-3">
+        <div class="card">
+          <div class="card-icon">🎭</div>
+          <div class="card-title">Spectacles inclus</div>
+          <div class="card-text">Comédie musicale Broadway-style chaque soir. Jongleurs, acrobates, illusionnistes. Cirque du Soleil at Sea (Grandiosa, Virtuosa) — spectacles exclusifs inclus.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🌊</div>
+          <div class="card-title">Parc aquatique</div>
+          <div class="card-text">Toboggans géants, dont le Venom Drop sur 11 ponts (Seashore/Seascape). Piscines multiples, dont piscine à débordement Yacht Club. Splash zone pour enfants.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">👶</div>
+          <div class="card-title">Clubs enfants (gratuits)</div>
+          <div class="card-text">Baby Club (0-3 ans), Mini Club (3-6), Juniors (7-11), Teen Club (12-17). Partenariats : LEGO, Chicco, Playmobil. Cours de langues, cuisine Doremi Chef, activités sportives.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🎰</div>
+          <div class="card-title">Casino</div>
+          <div class="card-text">Machines à sous et tables (blackjack, roulette, poker). Ouvert en mer uniquement. Points fidélité non gagnés sur les dépenses casino.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🛍️</div>
+          <div class="card-title">Shopping à bord</div>
+          <div class="card-text">Boutiques duty-free, parfumerie, bijouterie. Boutiques souvenirs MSC. Réductions selon statut fidélité (ex : 20% sur photos niveau Blue Diamond).</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">📱</div>
+          <div class="card-title">Internet & Technologie</div>
+          <div class="card-text">Forfait Browse (navigation web, WhatsApp). Forfait Browse & Stream (streaming vidéo). Inclus Yacht Club. Bracelet MSC for Me sur certains navires (clé cabine + paiement).</div>
+        </div>
+      </div>
+
+      <div class="btn-nav">
+        <button class="btn btn-outline" onclick="showModule('cabines', document.querySelector('[data-module=cabines]'))">← Précédent</button>
+        <button class="btn btn-gold" onclick="completeAndNext('services', 'destinations')">Module suivant →</button>
+      </div>
+    </div>
+
+    <!-- MODULE 5: DESTINATIONS -->
+    <div class="module" id="mod-destinations">
+      <div class="module-header">
+        <div class="module-tag">Module 5</div>
+        <h1 class="module-title">Destinations <span>MSC</span></h1>
+        <p class="module-intro">MSC couvre la quasi-totalité du globe. La maîtrise des destinations vous permet de proposer la croisière idéale selon la saison, le budget et les envies du client.</p>
+      </div>
+
+      <div class="dest-grid">
+        <div class="dest-card">
+          <div class="dest-flag">🌊</div>
+          <div class="dest-name">Méditerranée Occidentale</div>
+          <div class="dest-ports">Marseille, Barcelone, Valence, Gênes, Civitavecchia (Rome), Naples, Palerme, Malte</div>
+          <span class="dest-season">Avril — Octobre</span>
+        </div>
+        <div class="dest-card">
+          <div class="dest-flag">🏛️</div>
+          <div class="dest-name">Méditerranée Orientale</div>
+          <div class="dest-ports">Athènes (Pirée), Santorin, Mykonos, Corfou, Dubrovnik, Kotor, Istanbul</div>
+          <span class="dest-season">Avril — Novembre</span>
+        </div>
+        <div class="dest-card">
+          <div class="dest-flag">🌺</div>
+          <div class="dest-name">Caraïbes & Antilles</div>
+          <div class="dest-ports">Martinique, Guadeloupe, Sainte-Lucie, Barbade, Saint-Martin, Nassau, Ocean Cay</div>
+          <span class="dest-season">Toute l'année · Haute saison Nov—Avr</span>
+        </div>
+        <div class="dest-card">
+          <div class="dest-flag">🏔️</div>
+          <div class="dest-name">Europe du Nord & Fjords</div>
+          <div class="dest-ports">Bergen, Geiranger, Flåm, Stavanger, Oslo, Copenhague, Kiel, Hambourg, Aurores boréales</div>
+          <span class="dest-season">Mai — Septembre</span>
+        </div>
+        <div class="dest-card">
+          <div class="dest-flag">🌍</div>
+          <div class="dest-name">Afrique & Îles Atlantique</div>
+          <div class="dest-ports">Dakar, Casablanca, Tenerife, Gran Canaria, Madère, îles du Cap-Vert, Durban</div>
+          <span class="dest-season">Octobre — Avril</span>
+        </div>
+        <div class="dest-card">
+          <div class="dest-flag">🌏</div>
+          <div class="dest-name">Amérique du Sud</div>
+          <div class="dest-ports">Santos (São Paulo), Rio de Janeiro, Buenos Aires, Montevideo, Punta del Este, Ilhabela</div>
+          <span class="dest-season">Novembre — Mars</span>
+        </div>
+        <div class="dest-card">
+          <div class="dest-flag">🕌</div>
+          <div class="dest-name">Moyen-Orient & Émirats</div>
+          <div class="dest-ports">Dubaï, Abu Dhabi, Sir Bani Yas (île privée), Doha, Mascate, Aqaba</div>
+          <span class="dest-season">Octobre — Avril</span>
+        </div>
+        <div class="dest-card">
+          <div class="dest-flag">🌐</div>
+          <div class="dest-name">Tour du Monde MSC</div>
+          <div class="dest-ports">Croisière mondiale annuelle — environ 120 jours, 40+ escales. MSC Musica 2028 prévu.</div>
+          <span class="dest-season">Départ en janvier</span>
+        </div>
+      </div>
+
+      <div class="section-title">🏝️ Ocean Cay MSC Marine Reserve</div>
+      <div class="highlight-box">
+        <div class="hb-title">L'île privée de MSC aux Bahamas</div>
+        <p style="font-size:0.9rem;line-height:1.7;color:var(--cream);margin-bottom:16px">
+          Ancienne plateforme industrielle transformée en paradis tropical. Ocean Cay est la réserve marine privée de MSC aux Bahamas. C'est un argument de vente puissant, car peu de compagnies disposent d'une île aussi développée.
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <span class="tag tag-blue">7 plages</span>
+          <span class="tag tag-gold">Plage VIP Yacht Club exclusive</span>
+          <span class="tag tag-green">Réserve marine protégée</span>
+          <span class="tag tag-blue">Concerts en soirée</span>
+          <span class="tag tag-gold">Restaurants & bars inclus</span>
+          <span class="tag tag-green">Sports nautiques</span>
+          <span class="tag tag-blue">Forfait Premium Extra valable</span>
+        </div>
+      </div>
+
+      <div class="callout tip">
+        <strong>🗓️ Astuce saison :</strong> Pour les clients français au départ de Marseille, recommandez la Méditerranée d'avril à octobre. Pour novembre-avril, orientez vers les Caraïbes (avec vol) ou les Canaries/Afrique du Nord. En été, les Fjords norvégiens sont un argument premium fort.
+      </div>
+
+      <div class="btn-nav">
+        <button class="btn btn-outline" onclick="showModule('services', document.querySelector('[data-module=services]'))">← Précédent</button>
+        <button class="btn btn-gold" onclick="completeAndNext('destinations', 'fidelite')">Module suivant →</button>
+      </div>
+    </div>
+
+    <!-- MODULE 6: FIDÉLITÉ -->
+    <div class="module" id="mod-fidelite">
+      <div class="module-header">
+        <div class="module-tag">Module 6</div>
+        <h1 class="module-title">MSC <span>Voyagers Club</span></h1>
+        <p class="module-intro">Le programme de fidélité MSC est un outil de vente puissant. Utilisez-le pour fidéliser vos clients, justifier une montée en gamme, et les inciter à réserver tôt.</p>
+      </div>
+
+      <div class="callout">
+        <strong>📌 Essentiel :</strong> L'adhésion est <strong>gratuite et sans limite d'âge</strong>. Toute personne ayant voyagé avec MSC depuis 2006 ou ayant une réservation confirmée peut s'inscrire. La carte est valide 3 ans (renouvelée à chaque croisière).
+      </div>
+
+      <div class="section-title">Les 6 Niveaux</div>
+      <div class="level-bar">
+        <div class="level-step w"></div>
+        <div class="level-step classic"></div>
+        <div class="level-step silver"></div>
+        <div class="level-step gold"></div>
+        <div class="level-step diamond"></div>
+        <div class="level-step blue"></div>
+      </div>
+      <div class="levels-grid">
+        <div class="level-card level-welcome">
+          <div class="level-icon">⚪</div>
+          <div class="level-name">Welcome</div>
+          <div class="level-pts">Dès la 1ère réservation</div>
+          <p style="font-size:0.78rem;color:var(--gray);margin-top:8px">Inscriptions, accumulation de points, carte de croisière</p>
+        </div>
+        <div class="level-card level-classic">
+          <div class="level-icon">🔵</div>
+          <div class="level-name">Classic</div>
+          <div class="level-pts">Après 1 croisière</div>
+          <p style="font-size:0.78rem;color:var(--gray);margin-top:8px">Réductions exclusives sur futures croisières</p>
+        </div>
+        <div class="level-card level-silver">
+          <div class="level-icon">🥈</div>
+          <div class="level-name">Silver</div>
+          <div class="level-pts">Seuil de points atteint</div>
+          <p style="font-size:0.78rem;color:var(--gray);margin-top:8px"><strong style="color:var(--cream)">+50€ crédit à bord par personne</strong> si réservation > 12 mois avant</p>
+        </div>
+        <div class="level-card level-gold">
+          <div class="level-icon">🥇</div>
+          <div class="level-name">Gold</div>
+          <div class="level-pts">Niveau intermédiaire</div>
+          <p style="font-size:0.78rem;color:var(--gray);margin-top:8px"><strong style="color:var(--cream)">1h thermal gratuite</strong> + 30% sur fitness + 50% simulateur F1</p>
+        </div>
+        <div class="level-card level-diamond">
+          <div class="level-icon">💎</div>
+          <div class="level-name">Diamond</div>
+          <div class="level-pts">Niveau avancé</div>
+          <p style="font-size:0.78rem;color:var(--gray);margin-top:8px">Avantages cumulés + invitations événements privés</p>
+        </div>
+        <div class="level-card level-bluediamond">
+          <div class="level-icon">🔷</div>
+          <div class="level-name">Blue Diamond</div>
+          <div class="level-pts">Niveau maximal</div>
+          <p style="font-size:0.78rem;color:var(--gray);margin-top:8px"><strong style="color:#80b0ff">Forfait Browse gratuit</strong> + accès Yacht Club lounge embarquement + 20% photos</p>
+        </div>
+      </div>
+
+      <div class="section-title">Comment gagner des points</div>
+      <table class="data-table">
+        <thead><tr><th>Critère</th><th>Points (exemple)</th><th>Conseil</th></tr></thead>
+        <tbody>
+          <tr><td>Ambiance Bella, 5 nuits</td><td>~200 points</td><td>—</td></tr>
+          <tr><td>Ambiance Fantastica, 7 nuits</td><td>~350–500 pts</td><td>Bon rapport</td></tr>
+          <tr><td>Ambiance Aurea, 7 nuits</td><td>~700–900 pts</td><td>Montée en gamme recommandée</td></tr>
+          <tr><td>MSC Yacht Club, 10+ nuits</td><td>~2 000 pts</td><td>Maximum par croisière</td></tr>
+          <tr><td>Forfaits prépayés (150€)</td><td>+100 pts</td><td>Inciter à prépayer boissons/spa</td></tr>
+          <tr><td>Croisière Tour du Monde</td><td>Points × 3</td><td>Offre spéciale fidélité</td></tr>
+          <tr><td>Réservation > 12 mois avant</td><td>Points × 2</td><td>🔑 Argument clé pour réservation anticipée</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <strong>🏆 Astuce vendeur :</strong> Le <strong>Status Match</strong> permet à un client fidèle d'une autre compagnie (Costa, Royal Caribbean, Norwegian, ou même d'hôtels et compagnies aériennes) de transférer son niveau directement chez MSC. C'est un argument fort pour recruter des clients d'autres compagnies !
+      </div>
+
+      <div class="section-title">Stratégie de réservation anticipée</div>
+      <div class="card-grid card-grid-3">
+        <div class="card" style="text-align:center">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:2.5rem;color:var(--gold)">+5%</div>
+          <div class="card-title">Réservation > 9 mois</div>
+          <div class="card-text">Réduction supplémentaire sur le prix de la croisière</div>
+        </div>
+        <div class="card" style="text-align:center">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:2.5rem;color:var(--gold)">+5% + ×2</div>
+          <div class="card-title">Réservation > 12 mois</div>
+          <div class="card-text">Réduction + doublement des points + 50€ crédit (Silver+)</div>
+        </div>
+        <div class="card" style="text-align:center">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:2.5rem;color:var(--gold)">×3</div>
+          <div class="card-title">MSC World Cruise</div>
+          <div class="card-text">Triple des points sur le tour du monde annuel</div>
+        </div>
+      </div>
+
+      <div class="btn-nav">
+        <button class="btn btn-outline" onclick="showModule('destinations', document.querySelector('[data-module=destinations]'))">← Précédent</button>
+        <button class="btn btn-gold" onclick="completeAndNext('fidelite', 'quiz')">Passer le Quiz Final 🎓</button>
+      </div>
+    </div>
+
+    <!-- MODULE 7: EXCURSIONS -->
+    <div class="module" id="mod-excursions">
+      <div class="module-header">
+        <div class="module-tag">Module 7</div>
+        <h1 class="module-title">Excursions <span>MSC</span></h1>
+        <p class="module-intro">Plus de 2 000 excursions dans 190 destinations. Maîtriser l'offre excursions MSC vous permet d'augmenter significativement votre panier moyen tout en enrichissant l'expérience client.</p>
+      </div>
+
+      <div class="callout">
+        <strong>💰 Pourquoi vendre les excursions MSC ?</strong> Les excursions officielles MSC sont un argument de réassurance fort : prestataires certifiés, guide pouvant contacter le navire en cas d'imprévu, et garantie que le bateau vous attend. Prix inclus, annulation flexible — et pour vous, une commission supplémentaire.
+      </div>
+
+      <div class="section-title">Les 6 catégories d'excursions</div>
+      <div class="card-grid card-grid-3">
+        <div class="card">
+          <div class="card-icon">🏛️</div>
+          <div class="card-title">Culture & Patrimoine</div>
+          <div class="card-text">Visites guidées de sites historiques, musées, monuments UNESCO. Avec guides francophones selon disponibilité. Idéales pour les retraités et les voyageurs curieux. Ex : Colisée de Rome, Acropole d'Athènes, Sagrada Familia.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🏄</div>
+          <div class="card-title">Sport & Aventure</div>
+          <div class="card-text">Plongée, snorkeling, jet-ski, quad, randonnée, kayak, parachute ascensionnel. Parfaites pour les familles actives et les jeunes adultes. À proposer aux clients avec enfants de plus de 8 ans ou aux couples sportifs.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🍷</div>
+          <div class="card-title">Gastronomie & Art de vivre</div>
+          <div class="card-text">Dégustations de vins locaux, cours de cuisine, marchés traditionnels, visites de vignobles. Argument fort pour les amateurs de gastronomie. En Méditerranée : huile d'olive en Crète, limoncello à Naples, cava à Barcelone.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🌿</div>
+          <div class="card-title">MSC PROTECTOURS — Éco</div>
+          <div class="card-text">Excursions à faible impact environnemental, minutieusement sélectionnées. Immersion dans la nature, observation de faune sauvage, activités durables. Argument différenciant fort pour une clientèle sensible à l'écologie.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🚲</div>
+          <div class="card-title">MSC Bike Adventours</div>
+          <div class="card-text">Excursions spécifiques à vélo dans les ports escales. Découverte active des villes et régions côtières. Idéales pour les cyclistes et les personnes cherchant une alternative active aux bus touristiques.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">⭐</div>
+          <div class="card-title">Excursions Yacht Club</div>
+          <div class="card-text">Exclusivement pour les clients MSC Yacht Club. Groupes réduits, guides experts locaux, accès à des lieux secrets inaccessibles au grand public. Expériences sur mesure selon l'itinéraire. Argument de vente premium puissant.</div>
+        </div>
+      </div>
+
+      <div class="section-title">Le Forfait Explorer — Outil de vente clé</div>
+      <div class="highlight-box">
+        <div class="hb-title">🗺️ Forfait Explorer : 3 excursions au prix avantageux</div>
+        <p style="font-size:0.9rem;line-height:1.7;color:var(--cream);margin-bottom:16px">
+          MSC propose des <strong>Forfaits Explorer</strong> : un bundle de 3 excursions parmi les meilleures de chaque croisière, à un prix global attractif (10% de réduction par rapport à l'achat séparé). C'est un excellent argument de vente à proposer au moment de la réservation.
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+          <span class="tag tag-gold">Disponible en Méditerranée</span>
+          <span class="tag tag-gold">Europe du Nord</span>
+          <span class="tag tag-gold">MSC Grands Voyages</span>
+          <span class="tag tag-gold">Amérique du Sud</span>
+          <span class="tag tag-blue">Quantités limitées</span>
+          <span class="tag tag-blue">Non modifiable ni remboursable</span>
+        </div>
+        <div class="callout warning" style="margin:0">
+          <strong>⚠️ Important à communiquer au client :</strong> Une fois le forfait Explorer activé, les 3 excursions sont fixes — elles ne peuvent être ni modifiées ni remboursées. Informez systématiquement vos clients avant la réservation.
+        </div>
+      </div>
+
+      <div class="section-title">Comment réserver et dans quel ordre conseiller</div>
+      <table class="data-table">
+        <thead><tr><th>Moment de réservation</th><th>Avantage</th><th>Conseil</th></tr></thead>
+        <tbody>
+          <tr><td>Avant la croisière (site MSC)</td><td>Tarifs prépayés réduits (~10%), places garanties</td><td>✅ Recommandé — à proposer systématiquement</td></tr>
+          <tr><td>Le jour de l'embarquement</td><td>Flexibilité, choix selon météo/humeur</td><td>Possible mais places limitées sur excursions populaires</td></tr>
+          <tr><td>À bord (bureau des excursions)</td><td>Conseils personnalisés de l'équipe MSC</td><td>Disponibilité non garantie sur les excursions phares</td></tr>
+          <tr><td>Via bornes interactives à bord</td><td>Pratique, 24h/24</td><td>Disponible sur les navires récents (Meraviglia+, World)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-title">Excursions par destination — Les incontournables</div>
+      <div class="card-grid card-grid-2">
+        <div class="card">
+          <div class="card-icon">🇮🇹</div>
+          <div class="card-title">Méditerranée — Bestsellers</div>
+          <div class="card-text">Rome : Colisée + Forum + Vatican. Athènes : Acropole + Plaka. Santorini : coucher de soleil à Oia. Naples : Pompéi + pizza napolitaine. Barcelone : Sagrada Familia + Parc Güell. Dubrovnik : remparts de la vieille ville.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🌴</div>
+          <div class="card-title">Caraïbes — Bestsellers</div>
+          <div class="card-text">Ocean Cay : sports nautiques + plage privée. Martinique : rhum agricole + plages de sable noir. Barbade : plantation de canne + plongée. Nassau : plage Cable Beach + snorkeling. Sainte-Lucie : Pitons + cascade.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🏔️</div>
+          <div class="card-title">Fjords norvégiens</div>
+          <div class="card-text">Geiranger : excursion en zodiac dans le fjord. Bergen : funiculaire du Mont Fløyen + marché aux poissons. Flåm : train panoramique mythique de Flåmsbana. Aurores boréales (Tromso, selon saison).</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🕌</div>
+          <div class="card-title">Émirats & Moyen-Orient</div>
+          <div class="card-text">Dubaï : visite Burj Khalifa + souks d'or. Abu Dhabi : mosquée Sheikh Zayed + désert en 4x4. Sir Bani Yas : safari faune locale (gazelles, girafes). Muscat : vieille ville + souk Al Dhalam.</div>
+        </div>
+      </div>
+
+      <div class="callout tip">
+        <strong>🎯 Astuce vente excursions :</strong> Proposez systématiquement 1 excursion "mémorable" (valeur émotionnelle forte = coucher de soleil à Santorin, safari, Colisée) + 1 excursion "pratique" (transfert ville, shopping) par escale. Les clients retiennent leur voyage par ces moments forts — et vous remercient de les avoir conseillés.
+      </div>
+
+      <div class="btn-nav">
+        <button class="btn btn-outline" onclick="showModule('fidelite', document.querySelector('[data-module=fidelite]'))">← Précédent</button>
+        <button class="btn btn-gold" onclick="completeAndNext('excursions', 'securite')">Module suivant →</button>
+      </div>
+    </div>
+
+    <!-- MODULE 8: SÉCURITÉ -->
+    <div class="module" id="mod-securite">
+      <div class="module-header">
+        <div class="module-tag">Module 8</div>
+        <h1 class="module-title">Sécurité <span>à bord</span></h1>
+        <p class="module-intro">La sécurité est une préoccupation légitime de nombreux clients avant une première croisière. Maîtriser ces informations vous permet de rassurer avec professionnalisme et de gagner leur confiance.</p>
+      </div>
+
+      <div class="callout tip">
+        <strong>💡 Pourquoi aborder la sécurité avec vos clients ?</strong> Un client rassuré est un client qui réserve. Les non-croisiéristes ont souvent des craintes héritées de médias. Savoir répondre avec précision sur les protocoles MSC vous positionne en expert crédible.
+      </div>
+
+      <div class="section-title">L'exercice de sauvetage obligatoire (Muster Drill)</div>
+      <div class="highlight-box">
+        <div class="hb-title">🚨 La règle SOLAS : obligatoire avant l'appareillage</div>
+        <p style="font-size:0.9rem;line-height:1.7;color:var(--cream);margin-bottom:16px">
+          La convention internationale SOLAS (Safety of Life at Sea) impose un exercice de sauvetage obligatoire pour tous les passagers. Depuis 2020, MSC a adopté le format <strong>"eMuster"</strong> (sur application mobile ou téléviseur de cabine) qui permet de compléter la partie théorique depuis sa cabine, avec seulement un rassemblement physique court au poste de sécurité assigné.
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <span class="tag tag-blue">Obligatoire pour tous les passagers</span>
+          <span class="tag tag-gold">Avant ou juste après l'appareillage</span>
+          <span class="tag tag-green">Format eMuster digital depuis 2020</span>
+          <span class="tag tag-blue">Poste de sécurité indiqué sur la carte cabine</span>
+        </div>
+      </div>
+
+      <div class="section-title">Équipements de sécurité à bord</div>
+      <div class="card-grid card-grid-3">
+        <div class="card">
+          <div class="card-icon">🦺</div>
+          <div class="card-title">Gilets de sauvetage</div>
+          <div class="card-text">Un gilet de sauvetage par passager, rangé dans chaque cabine (placard ou sous le lit selon le navire). Gilets supplémentaires pour enfants disponibles. Instructions affichées dans chaque cabine.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🚤</div>
+          <div class="card-title">Canots de sauvetage</div>
+          <div class="card-text">Capacité totale des embarcations de sauvetage = 125% des personnes à bord (passagers + équipage). Répartis des deux côtés du navire. Inspection régulière selon normes IMO.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🔥</div>
+          <div class="card-title">Systèmes anti-incendie</div>
+          <div class="card-text">Sprinklers automatiques dans toutes les cabines et espaces communs. Portes coupe-feu à fermeture automatique. Système de détection précoce. Équipes de pompiers formées à bord.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🏥</div>
+          <div class="card-title">Infirmerie médicale</div>
+          <div class="card-text">Chaque navire dispose d'une infirmerie avec médecin et personnel infirmier 24h/24. Équipements de soins d'urgence, défibrillateurs. Évacuation médicale possible par hélicoptère si nécessaire.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">📡</div>
+          <div class="card-title">Systèmes de communication</div>
+          <div class="card-text">Système GMDSS (Global Maritime Distress and Safety System). Balises de détresse EPIRB. Communication satellite avec les autorités maritimes et garde-côtes. Pont de navigation opérationnel 24h/24.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">⚓</div>
+          <div class="card-title">Stabilisateurs actifs</div>
+          <div class="card-text">Tous les navires MSC sont équipés de stabilisateurs anti-roulis actifs réduisant significativement les mouvements. Les navires récents (classe World, Meraviglia) ont les systèmes les plus performants. Conseil anti-mal de mer : cabine milieu navire, pont intermédiaire.</div>
+        </div>
+      </div>
+
+      <div class="section-title">Règles de vie à bord — À communiquer aux clients</div>
+      <table class="data-table">
+        <thead><tr><th>Règle</th><th>Détails</th><th>Pourquoi l'expliquer</th></tr></thead>
+        <tbody>
+          <tr><td>🚬 Tabac</td><td>Interdit dans les cabines (y compris balcons). Zones fumeurs désignées en extérieur uniquement.</td><td>Amende en cas de violation — prévenir les fumeurs</td></tr>
+          <tr><td>🌊 Balcon</td><td>Interdiction de jeter quoi que ce soit à la mer depuis le balcon. Objet perdu = responsabilité du passager.</td><td>Protection de l'environnement marin</td></tr>
+          <tr><td>🍾 Alcool personnel</td><td>Apport d'alcool personnel à bord interdit. Sauf 1 bouteille de vin ou champagne par adulte selon conditions.</td><td>Souvent méconnu — gérer les attentes</td></tr>
+          <tr><td>🔌 Appareils électriques</td><td>Fers à repasser, bouilloires électriques personnels interdits. Chargeurs et prises normales autorisés. Prises adaptateurs recommandés.</td><td>Sécurité électrique à bord</td></tr>
+          <tr><td>⏰ Heure d'appareillage</td><td>Le navire attend personne. En excursion MSC : navire garantit l'attente. En sortie libre : risque de manquer le départ.</td><td>Argument de vente fort pour les excursions officielles</td></tr>
+          <tr><td>💳 Compte à bord</td><td>Carte de croisière = moyen de paiement cashless à bord. Compte ouvert à l'embarquement. Solde payable au débarquement (CB ou espèces).</td><td>Anticiper les questions des primo-croisiéristes</td></tr>
+          <tr><td>🛳️ Code vestimentaire</td><td>Décontracté en journée. Tenue élégante recommandée au restaurant principal le soir. Soirées thématiques annoncées dans le journal de bord (soirée blanche, gala).</td><td>Préparer les valises correctement</td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-title">Normes environnementales & engagements MSC</div>
+      <div class="card-grid card-grid-2">
+        <div class="card">
+          <div class="card-icon">🌊</div>
+          <div class="card-title">Protection des océans</div>
+          <div class="card-text">Zéro rejet d'eaux usées non traitées en mer. Systèmes avancés d'épuration intégrés. Gestion rigoureuse des déchets solides : tri, compression, incinération à bord. Aucun plastique à usage unique sur les navires récents.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🌿</div>
+          <div class="card-title">Réduction des émissions</div>
+          <div class="card-text">Navires GNL (World Europa, Euribia, World America) : réduction de 20% de CO₂ vs fioul. Scrubbers sur les anciens navires. Éclairage LED partout. Récupération de chaleur des moteurs. Objectif : -30% d'émissions supplémentaires d'ici 2030.</div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>💬 Réponse type au client inquiet :</strong> "Les navires MSC sont soumis aux normes de sécurité les plus strictes au monde (SOLAS, IMO). Un exercice de sauvetage obligatoire a lieu à chaque départ. Les équipages sont entraînés en permanence, et chaque navire dispose d'une infirmerie médicale 24h/24. MSC a transporté des millions de passagers en toute sécurité depuis plus de 35 ans."
+      </div>
+
+      <div class="btn-nav">
+        <button class="btn btn-outline" onclick="showModule('excursions', document.querySelector('[data-module=excursions]'))">← Précédent</button>
+        <button class="btn btn-gold" onclick="completeAndNext('securite', 'devenir')">Module suivant →</button>
+      </div>
+    </div>
+
+    <!-- MODULE 9: DEVENIR AGENT -->
+    <div class="module" id="mod-devenir">
+      <div class="module-header">
+        <div class="module-tag">Module 9</div>
+        <h1 class="module-title">Devenir <span>Agent Croisière Indépendant</span></h1>
+        <p class="module-intro">Tu es passionné de croisières et tu veux en faire ton activité professionnelle ? Voici la feuille de route complète pour exercer en France, avec ou sans structure propre — et les partenaires sérieux pour démarrer.</p>
+      </div>
+
+      <div class="callout tip">
+        <strong>🎯 La réalité du marché :</strong> Le marché français de la croisière est en croissance constante. En 2023, plus de 750 000 Français ont fait une croisière. La demande de conseillers spécialisés est forte, notamment pour le segment premium et les clientèles séniors aisées. La spécialisation croisière est un positionnement porteur.
+      </div>
+
+      <div class="section-title">Les 3 voies pour exercer en France</div>
+      <div class="card-grid card-grid-3">
+        <div class="card" style="border-color: rgba(74,160,224,0.4);">
+          <div class="card-icon">🏠</div>
+          <div class="card-title" style="color:#80b0ff">Voie 1 — Mandataire</div>
+          <div class="card-text">
+            <strong style="color:var(--cream)">La voie la plus accessible</strong><br><br>
+            Tu travailles sous le nom et la licence d'une agence mandante. Pas d'immatriculation Atout France à obtenir toi-même. Tu touches une commission sur chaque vente (généralement 50-70% de la commission reçue par l'agence).<br><br>
+            <span class="tag tag-green">Démarrage rapide</span>
+            <span class="tag tag-blue">Peu de frais fixes</span>
+            <span class="tag tag-gold">Idéal pour tester</span>
+          </div>
+        </div>
+        <div class="card" style="border-color: rgba(201,168,76,0.4);">
+          <div class="card-icon">🌐</div>
+          <div class="card-title" style="color:var(--gold-light)">Voie 2 — Agence à domicile</div>
+          <div class="card-text">
+            <strong style="color:var(--cream)">L'équilibre liberté / cadre</strong><br><br>
+            Immatriculation Atout France en propre (ou via réseau). Travail depuis chez toi. Totale liberté sur les fournisseurs. Commissions 100% pour toi. Nécessite garantie financière + RCP assurance.<br><br>
+            <span class="tag tag-gold">100% de la commission</span>
+            <span class="tag tag-blue">Liberté totale</span>
+            <span class="tag tag-green">Frais modérés</span>
+          </div>
+        </div>
+        <div class="card" style="border-color: rgba(160,80,200,0.4);">
+          <div class="card-icon">🏢</div>
+          <div class="card-title" style="color:#d4a0ff">Voie 3 — Agence physique</div>
+          <div class="card-text">
+            <strong style="color:var(--cream)">L'agence de plein exercice</strong><br><br>
+            Local commercial, enseigne, salariés éventuels. Immatriculation Atout France obligatoire. Garantie financière élevée (100 000–200 000€). Investissement conséquent mais crédibilité maximale.<br><br>
+            <span class="tag tag-blue">Visibilité locale</span>
+            <span class="tag tag-gold">Crédibilité</span>
+            <span class="tag tag-green">Volume potentiel élevé</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">📋 Obligations légales en France</div>
+      <div class="highlight-box">
+        <div class="hb-title">Atout France — L'immatriculation obligatoire</div>
+        <p style="font-size:0.9rem;line-height:1.7;color:var(--cream);margin-bottom:16px">
+          Toute personne souhaitant vendre des voyages doit être immatriculée au <strong>Registre des opérateurs de voyages et séjours</strong> géré par Atout France (ou passer par un mandant déjà immatriculé). L'immatriculation est gratuite depuis 2019 mais nécessite des justificatifs.
+        </p>
+        <table class="data-table">
+          <thead><tr><th>Obligation</th><th>Détails</th><th>Pour qui</th></tr></thead>
+          <tbody>
+            <tr><td>Immatriculation Atout France</td><td>Dépôt de dossier en ligne, décision en 1 mois, renouvellement tous les 3 ans</td><td>Toute agence indépendante</td></tr>
+            <tr><td>Garantie financière</td><td>100 000 à 200 000€ selon CA prévisionnel (pour agences de statut associatif : 30 000€)</td><td>Toute agence immatriculée</td></tr>
+            <tr><td>Assurance RCP</td><td>Responsabilité Civile Professionnelle — couvre les erreurs et dommages</td><td>Toute agence immatriculée</td></tr>
+            <tr><td>Numéro Atout France</td><td>Doit figurer sur TOUS les documents et le site web</td><td>Obligatoire à l'affichage</td></tr>
+            <tr><td>Mandataire (alternative)</td><td>Agir sous la licence d'une agence mandante — pas d'immatriculation propre nécessaire</td><td>Indépendants débutants</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section-title">🤝 Les réseaux sérieux pour se lancer en France</div>
+      <div class="card-grid card-grid-2">
+        <div class="card" style="border-color:rgba(201,168,76,0.35)">
+          <div class="card-icon">🌊</div>
+          <div class="card-title">CLIA France — La certification de référence</div>
+          <div class="card-text">
+            La <strong>Cruise Lines International Association</strong> est l'association mondiale de la croisière. MSC est membre CLIA.<br><br>
+            <strong style="color:var(--gold-light)">Ce que CLIA offre :</strong><br>
+            → Académie CLIA en ligne : formations produits, destinations, techniques de vente<br>
+            → Certification officielle "Spécialiste Croisière" (4 niveaux)<br>
+            → Accès au moteur de recherche professionnel (500+ navires en français)<br>
+            → Roadshows régionaux + visites de navires<br>
+            → Accès à la brochure et aux contacts MSC, Costa, Royal Caribbean…<br><br>
+            <strong style="color:var(--gold-light)">Tarifs 2025 :</strong><br>
+            Adhésion agence à domicile : <strong>80€ HT/an</strong> (jusqu'à 2 IAM)<br>
+            Adhésion agence standard : <strong>210€ HT/an</strong> (jusqu'à 10 agents)<br><br>
+            <a href="https://cruising.org/fr-fr" style="color:#80b0ff;font-size:0.8rem">→ cruising.org/fr-fr</a>
+          </div>
+        </div>
+        <div class="card" style="border-color:rgba(74,160,224,0.35)">
+          <div class="card-icon">🏗️</div>
+          <div class="card-title">Réseaux mandataires — Les plateformes pour indépendants</div>
+          <div class="card-text">
+            Ces structures permettent d'exercer sans immatriculation propre, sous leur licence Atout France.<br><br>
+            <strong style="color:var(--cream)">Myway (Collectif Myway)</strong><br>
+            → Modèle innovant "host agency" français<br>
+            → Liberté totale des fournisseurs (dont MSC)<br>
+            → Contrat apporteur d'affaires, votre propre marque<br>
+            → <a href="https://www.collectifmyway.com" style="color:#80b0ff;font-size:0.8rem">collectifmyway.com</a><br><br>
+            <strong style="color:var(--cream)">Selectour / Marietton / TourCom</strong><br>
+            → Réseaux coopératifs d'agences traditionnels<br>
+            → Centrale d'achats, outils de réservation, formation<br>
+            → Commissions MSC négociées en volume<br><br>
+            <strong style="color:var(--cream)">Havas Voyages / Thomas Cook</strong><br>
+            → Franchise ou partenariat avec enseigne nationale<br>
+            → Notoriété + outils marketing fournis
+          </div>
+        </div>
+        <div class="card" style="border-color:rgba(42,157,111,0.35)">
+          <div class="card-icon">📚</div>
+          <div class="card-title">Formation MSC Croisières directe</div>
+          <div class="card-text">
+            MSC dispose d'un <strong>espace professionnel dédié</strong> aux agents de voyage sur son site.<br><br>
+            <strong style="color:var(--cream)">Ce que propose MSC Pro :</strong><br>
+            → Accès aux outils de réservation en ligne<br>
+            → Matériaux de vente, brochures, fiches navires<br>
+            → Webinaires de formation produit<br>
+            → Accès aux tarifs agents et commissions<br>
+            → Invitations "Fam Trips" (voyages de découverte familiaux à tarif réduit ou gratuit)<br><br>
+            <strong style="color:var(--gold-light)">Fam Trips MSC :</strong> Ce sont des croisières gratuites ou très réduites proposées aux agents partenaires pour découvrir les navires. C'est l'outil de formation le plus puissant — et le plus apprécié ! Accessible via agence partenaire MSC ou CLIA.
+          </div>
+        </div>
+        <div class="card" style="border-color:rgba(160,80,200,0.35)">
+          <div class="card-icon">💡</div>
+          <div class="card-title">Se spécialiser : la stratégie gagnante</div>
+          <div class="card-text">
+            Dans un marché concurrentiel, la spécialisation est la clé de la rentabilité.<br><br>
+            <strong style="color:var(--cream)">Niches porteuses :</strong><br>
+            → <span class="tag tag-gold">Croisières MSC Yacht Club</span> (clients premium, commissions élevées)<br>
+            → <span class="tag tag-blue">Croisières famille + enfants</span> (argument enfants gratuits)<br>
+            → <span class="tag tag-green">Senior solo/couple</span> (segment en forte croissance)<br>
+            → <span class="tag tag-gold">Croisières Méditerranée au départ de Marseille</span> (marché local)<br>
+            → <span class="tag tag-blue">Voyages de noces / anniversaires</span> (groupes, champagne, surprises)<br><br>
+            <strong style="color:var(--gold-light)">Positioning tip :</strong> Positionner votre expertise sur "spécialiste MSC" via un blog, les réseaux sociaux ou un groupe Facebook est une stratégie d'acquisition client très efficace dans ce secteur.
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">💰 Comprendre la rémunération</div>
+      <table class="data-table">
+        <thead><tr><th>Source de revenus</th><th>Montant typique</th><th>Comment l'optimiser</th></tr></thead>
+        <tbody>
+          <tr><td>Commission MSC sur croisière</td><td>10 à 14% du prix HT selon volume</td><td>Augmente avec le volume annuel vendu à MSC</td></tr>
+          <tr><td>Commission excursions MSC</td><td>~10% sur les excursions vendues</td><td>Proposer systématiquement les excursions</td></tr>
+          <tr><td>Commission assurance voyage</td><td>20 à 35% de la prime</td><td>À proposer systématiquement — obligation légale d'info</td></tr>
+          <tr><td>Frais de dossier (optionnel)</td><td>20 à 80€ par dossier</td><td>Valoriser votre expertise de conseil personnalisé</td></tr>
+          <tr><td>Upsell ambiances (Aurea / YC)</td><td>Commission plus élevée sur prix plus élevé</td><td>Former sur les arguments Aurea et Yacht Club</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <strong>📊 Exemple de rentabilité :</strong> Une croisière MSC Yacht Club à 4 000€/pers pour 2 personnes = 8 000€ de vente. À 12% de commission = <strong>960€ de commission brute</strong>. En vendant 3 Yacht Club / mois + excursions + assurances, une activité bien ciblée peut générer 2 000–3 500€ nets mensuels en année 2.
+      </div>
+
+      <div class="section-title">🗺️ Feuille de route — Vos 6 premières étapes</div>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-year">Étape 1</div>
+          <div class="timeline-text"><strong>Se former</strong> — Compléter cette formation MSC. S'inscrire à l'Académie CLIA (certification gratuite avec adhésion). Suivre les webinaires MSC Pro.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-year">Étape 2</div>
+          <div class="timeline-text"><strong>Choisir son statut</strong> — Mandataire (démarrage rapide, moins de revenus) ou agence à domicile Atout France (plus d'investissement, mais 100% des commissions). Consulter un expert-comptable.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-year">Étape 3</div>
+          <div class="timeline-text"><strong>Adhérer à CLIA France</strong> — 80€/an pour l'adhésion agence à domicile. Accède à tous les outils professionnels, formations, et accréditations officielles.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-year">Étape 4</div>
+          <div class="timeline-text"><strong>Ouvrir un compte MSC Pro</strong> — Contacter MSC Croisières via le portail professionnel (msccroisieres.fr/agents) pour obtenir vos accès agent et vos conditions commerciales.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-year">Étape 5</div>
+          <div class="timeline-text"><strong>Participer à un Fam Trip</strong> — Demander une invitation pour une croisière de découverte MSC (via CLIA ou votre réseau mandataire). Rien ne remplace l'expérience personnelle pour vendre avec authenticité.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-year">Étape 6</div>
+          <div class="timeline-text"><strong>Construire votre audience</strong> — Blog spécialisé, groupe Facebook "passionnés de croisières", Instagram, TikTok croisières. Le contenu d'expertise attire naturellement les clients ciblés.</div>
+        </div>
+      </div>
+
+      <div class="btn-nav">
+        <button class="btn btn-outline" onclick="showModule('securite', document.querySelector('[data-module=securite]'))">← Précédent</button>
+        <button class="btn btn-gold" onclick="completeAndNext('devenir', 'quiz')">Passer le Quiz Final 🎓</button>
+      </div>
+    </div>
+
+    <!-- MODULE QUIZ -->
+    <div class="module" id="mod-quiz">
+      <div class="module-header">
+        <div class="module-tag">Quiz Final</div>
+        <h1 class="module-title">Certification <span>MSC Expert</span></h1>
+        <p class="module-intro">13 questions pour valider votre maîtrise de MSC Croisières. Chaque bonne réponse rapporte 10 points.</p>
+      </div>
+
+      <div class="quiz-container" id="quiz-area">
+        <!-- Questions générées par JS -->
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── DATA ──
+const quizData = [
+  {
+    q: "Quelle est la principale innovation du MSC World Europa, lancé en 2022 ?",
+    options: ["Le plus grand toboggan de la flotte", "Le premier navire MSC propulsé au GNL", "L'intégration du Cirque du Soleil at Sea", "Le premier navire avec un assistant vocal IA"],
+    answer: 1,
+    feedback: "Le MSC World Europa est le premier navire MSC à fonctionner au Gaz Naturel Liquéfié (GNL), marquant un tournant dans la politique environnementale de MSC Croisières."
+  },
+  {
+    q: "Quelle ambiance MSC inclut le forfait boissons Premium Extra sans supplément ?",
+    options: ["Aurea", "Fantastica", "MSC Yacht Club", "Bella Premium"],
+    answer: 2,
+    feedback: "Le forfait boissons Premium Extra est inclus dans l'expérience MSC Yacht Club. Pour les autres ambiances (Bella, Fantastica, Aurea), il doit être acheté en supplément."
+  },
+  {
+    q: "Qui a fondé MSC et en quelle année ?",
+    options: ["Gianluigi Aponte en 1970", "Sophia Loren en 1972", "Costa en 1965", "Gianluigi Aponte en 1987"],
+    answer: 0,
+    feedback: "Gianluigi Aponte a fondé MSC (Mediterranean Shipping Company) en 1970 à Naples avec le cargo Patricia. La branche croisières a été lancée en 1987."
+  },
+  {
+    q: "Quel est le nom de l'île privée de MSC aux Bahamas ?",
+    options: ["Sir Bani Yas", "Ocean Cay MSC Marine Reserve", "Cayo Levantado", "Harvest Caye"],
+    answer: 1,
+    feedback: "Ocean Cay MSC Marine Reserve est l'île privée de MSC aux Bahamas, ancienne plateforme industrielle reconvertie en réserve marine avec 7 plages et une zone VIP exclusive Yacht Club."
+  },
+  {
+    q: "Combien de boissons alcoolisées maximum peut-on consommer par jour avec un forfait boissons MSC ?",
+    options: ["10", "20", "15", "Illimité"],
+    answer: 2,
+    feedback: "MSC applique une limite de 15 boissons alcoolisées par jour et par passager pour tous les forfaits, y compris dans la zone Yacht Club. Une journée est comptée de 6h à 6h."
+  },
+  {
+    q: "Quelle classe de navires MSC est connue pour avoir la plus grande surface extérieure, conçue pour naviguer en Caraïbes ?",
+    options: ["Classe Meraviglia", "Classe Fantasia", "Classe Seaside", "Classe Musica"],
+    answer: 2,
+    feedback: "La Classe Seaside (MSC Seaside, Seaview, Seashore, Seascape) a été spécialement conçue pour les croisières en climat chaud avec un maximum de surface extérieure, une promenade en bord de mer et de grands parcs aquatiques."
+  },
+  {
+    q: "Quel avantage spécifique est inclus dans l'ambiance Aurea ?",
+    options: ["Majordome 24h/24", "Accès au spa thermal MSC Aurea", "Wi-Fi illimité pour 2 appareils", "Restaurant gastronomique privé"],
+    answer: 1,
+    feedback: "L'ambiance Aurea inclut un accès prioritaire à la suite thermale du MSC Aurea Spa (1h incluse) ainsi qu'un massage, en plus des avantages Fantastica."
+  },
+  {
+    q: "Le MSC Voyagers Club offre le doublement des points fidélité dans quel cas ?",
+    options: ["Réservation en Yacht Club uniquement", "Réservation plus de 12 mois avant le départ", "Lors d'une croisière de plus de 14 nuits", "Pour les membres Gold et plus"],
+    answer: 1,
+    feedback: "En réservant plus de 12 mois à l'avance, les membres bénéficient d'une réduction supplémentaire de 5%, du doublement des points ET d'un crédit à bord de 50€ par personne (à partir du niveau Silver)."
+  },
+  {
+    q: "Quel partenariat de divertissement exclusif est disponible sur le MSC Grandiosa et le MSC Virtuosa ?",
+    options: ["Lego Sea World", "Cirque du Soleil at Sea", "Disney on Ice", "Blue Man Group"],
+    answer: 1,
+    feedback: "Le Cirque du Soleil at Sea est un partenariat exclusif disponible sur certains navires MSC, notamment le MSC Grandiosa et le MSC Virtuosa, avec des spectacles inclus dans le prix de la croisière."
+  },
+  {
+    q: "Qu'est-ce que le 'Status Match' dans le programme MSC Voyagers Club ?",
+    options: ["Un matching de cabines pour voyageurs solos", "La possibilité de transférer son statut fidélité d'une autre compagnie vers MSC", "Un système de comparaison de prix avec les concurrents", "La concordance des ambiances entre deux réservations"],
+    answer: 1,
+    feedback: "Le Status Match permet à un client fidèle d'une autre compagnie (croisière, hôtel ou compagnie aérienne) de transférer son statut directement chez MSC, obtenant un niveau équivalent immédiatement. C'est un puissant outil de recrutement client."
+  },
+  {
+    q: "Qu'est-ce que le 'Forfait Explorer' chez MSC Croisières ?",
+    options: ["Un forfait boissons illimitées valable pendant les excursions", "Un bundle de 3 excursions à prix réduit (~10%), non modifiable ni remboursable", "Un pass pour accéder à tous les restaurants de spécialités", "Un forfait internet illimité valable à quai"],
+    answer: 1,
+    feedback: "Le Forfait Explorer est un bundle de 3 excursions parmi les meilleures de chaque croisière, proposé à un prix global avantageux. Important : une fois activé, il est non modifiable et non remboursable — à communiquer impérativement au client."
+  },
+  {
+    q: "Quel organisme officiel gère l'immatriculation obligatoire des agences de voyage en France ?",
+    options: ["La CLIA France", "Atout France", "L'IATA", "La Direction Générale des Entreprises"],
+    answer: 1,
+    feedback: "Atout France gère le Registre des opérateurs de voyages et de séjours. Toute agence souhaitant vendre des voyages en France doit y être immatriculée. Une alternative est d'exercer sous la licence d'une agence mandante (statut de mandataire)."
+  },
+  {
+    q: "Quel est l'avantage principal des excursions officielles MSC par rapport à une sortie libre lors d'une escale ?",
+    options: ["Elles sont toujours moins chères que les excursions indépendantes", "Le guide peut contacter le navire et le bateau garantit l'attente des passagers en excursion MSC", "Elles sont exclusivement réservées aux clients Yacht Club", "Elles donnent le double de points fidélité Voyagers Club"],
+    answer: 1,
+    feedback: "La garantie principale des excursions officielles MSC est que le navire garantit d'attendre les passagers en excursion MSC en cas d'imprévu — contrairement à une sortie libre où le navire appareille à l'heure prévue sans attendre les retardataires. C'est un argument de vente majeur."
+  }
+];
+
+// ── STATE ──
+let completed = {};
+let scores = {};
+let quizState = { current: 0, results: [], score: 0, done: false };
+let totalScore = 0;
+
+// ── LOADER ──
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('loader').style.opacity = '0';
+    setTimeout(() => document.getElementById('loader').style.display = 'none', 600);
+  }, 2000);
+  renderQuiz();
+});
+
+// ── NAVIGATION ──
+function showModule(id, el) {
+  document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('mod-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function completeAndNext(current, next) {
+  completed[current] = true;
+  const el = document.querySelector('[data-module=' + current + ']');
+  if (el) el.classList.add('completed');
+  if (el) el.querySelector('.check').textContent = '✓';
+  updateProgress();
+  showModule(next, document.querySelector('[data-module=' + next + ']'));
+}
+
+function updateProgress() {
+  const modules = ['histoire', 'flotte', 'cabines', 'services', 'destinations', 'fidelite', 'excursions', 'securite', 'devenir'];
+  const done = modules.filter(m => completed[m]).length;
+  const pct = Math.round((done / modules.length) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = done + ' / ' + modules.length + ' modules';
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// ── QUIZ ──
+function renderQuiz() {
+  const area = document.getElementById('quiz-area');
+  if (quizState.done) { renderScore(); return; }
+  area.innerHTML = '';
+  quizData.forEach((q, qi) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-question';
+    div.id = 'qq-' + qi;
+    const res = quizState.results[qi];
+    div.innerHTML = `
+      <div class="quiz-q-num">Question ${qi + 1} / ${quizData.length}</div>
+      <div class="quiz-q-text">${q.q}</div>
+      <div class="quiz-options">
+        ${q.options.map((opt, oi) => {
+          let cls = 'quiz-option';
+          if (res !== undefined) { cls += ' disabled'; if (oi === q.answer) cls += ' correct'; else if (oi === res && res !== q.answer) cls += ' wrong'; }
+          return `<div class="${cls}" onclick="answer(${qi}, ${oi})">${opt}</div>`;
+        }).join('')}
+      </div>
+      <div class="quiz-feedback ${res !== undefined ? 'show ' + (res === q.answer ? 'ok' : 'ko') : ''}">
+        ${res !== undefined ? (res === q.answer ? '✅ Correct ! ' : '❌ Incorrect. ') + q.feedback : ''}
+      </div>
+    `;
+    area.appendChild(div);
+  });
+  if (quizState.results.length === quizData.length) {
+    const btn = document.createElement('div');
+    btn.style.textAlign = 'center'; btn.style.marginTop = '32px';
+    btn.innerHTML = `<button class="btn btn-gold" onclick="finishQuiz()">Voir mes résultats 🏆</button>`;
+    area.appendChild(btn);
+  }
+}
+
+function answer(qi, oi) {
+  if (quizState.results[qi] !== undefined) return;
+  quizState.results[qi] = oi;
+  if (oi === quizData[qi].answer) quizState.score++;
+  renderQuiz();
+}
+
+function finishQuiz() {
+  quizState.done = true;
+  totalScore += quizState.score * 10;
+  document.getElementById('total-score').textContent = totalScore;
+  completed['quiz'] = true;
+  const el = document.querySelector('[data-module=quiz]');
+  if (el) { el.classList.add('completed'); el.querySelector('.check').textContent = '★'; }
+  updateProgress();
+  renderScore();
+}
+
+function renderScore() {
+  const area = document.getElementById('quiz-area');
+  const pct = Math.round((quizState.score / quizData.length) * 100);
+  let medal = pct >= 80 ? '🥇' : pct >= 60 ? '🥈' : '🥉';
+  let msg = pct >= 80 ? 'Excellent ! Vous êtes prêt à conseiller MSC avec expertise.' : pct >= 60 ? 'Bon résultat ! Révisez les modules pour atteindre l\'excellence.' : 'Continuez à réviser les modules — vous y êtes presque !';
+  area.innerHTML = `
+    <div class="quiz-score-box">
+      <div style="font-size:4rem;margin-bottom:16px">${medal}</div>
+      <div class="quiz-score-num">${quizState.score}/${quizData.length}</div>
+      <div class="quiz-score-label">${pct}% de réussite</div>
+      <p style="margin-top:20px;color:var(--cream);font-size:0.95rem">${msg}</p>
+      <div style="margin-top:28px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-gold" onclick="restartQuiz()">Recommencer le quiz</button>
+        <button class="btn btn-outline" onclick="showModule('home', document.querySelector('[data-module=home]'))">Retour à l'accueil</button>
+      </div>
+    </div>
+  `;
+}
+
+function restartQuiz() {
+  quizState = { current: 0, results: [], score: 0, done: false };
+  renderQuiz();
+}
+</script>
+</body>
+</html>
